@@ -107,3 +107,8 @@
   .search-input-wrap input{font-size:16px}
 }
 @media(pointer:coarse){.icon-button{min-width:44px;min-height:44px}}
+
+/* Hide the RSS subscription link in the footer on every page. */
+.site-footer a[href$="/feed.xml"] {
+  display: none;
+}
