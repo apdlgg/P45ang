@@ -1,51 +1,65 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>CTF/Wargame — P45ang</title><meta name="description" content="문제를 만났을 때의 가설부터 실패한 시도, 해결의 실마리까지."><meta name="author" content="P45ang"><meta property="og:title" content="CTF/Wargame"><meta property="og:description" content="문제를 만났을 때의 가설부터 실패한 시도, 해결의 실마리까지."><meta property="og:type" content="website"><meta property="og:url" content="https://apdlgg.github.io/P45ang/categories/ctf-wargame/"><link rel="canonical" href="https://apdlgg.github.io/P45ang/categories/ctf-wargame/"><link rel="alternate" type="application/rss+xml" title="P45ang" href="/P45ang/feed.xml"><meta name="theme-color" content="#161616"><link rel="icon" href="/P45ang/assets/favicon.svg" type="image/svg+xml"><script>document.documentElement.dataset.theme='dark';try{const t=localStorage.getItem('p45ang-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}</script><link rel="stylesheet" href="/P45ang/assets/style.css?v=331e0871cd27"><script src="/P45ang/assets/app.js" defer></script></head><body data-base="/P45ang"><a class="skip-link" href="#main">본문으로 건너뛰기</a><header class="site-header"><div class="header-inner"><a class="brand" href="/P45ang/" aria-label="P45ang 홈"><strong>P45ang</strong><span class="brand-divider"></span><span class="brand-caption">학습·활동 기록</span></a><nav class="main-nav" aria-label="주 메뉴" id="main-nav"><a aria-current="page" href="/P45ang/">기록</a><a  href="/P45ang/archive/">아카이브</a><a  href="/P45ang/about/">소개</a></nav><div class="header-actions"><button class="search-trigger" data-open-search aria-label="글 검색"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button><button class="icon-button theme-toggle" aria-label="테마 전환"><svg class="icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 13a9 9 0 0 1-10-10 9 9 0 1 0 10 10Z"/></svg><svg class="icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v2m0 18v2M1 12h2m18 0h2M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button><button class="icon-button mobile-toggle" aria-label="메뉴 열기" aria-controls="main-nav" aria-expanded="false"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></div></header>
-   <main id="main" class="page-shell category-page">
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>CTF/Wargame — P45ang</title><meta name="description" content="문제를 만났을 때의 가설부터 실패한 시도, 해결의 실마리까지."><meta name="author" content="P45ang"><meta property="og:title" content="CTF/Wargame"><meta property="og:description" content="문제를 만났을 때의 가설부터 실패한 시도, 해결의 실마리까지."><meta property="og:type" content="website"><meta name="theme-color" content="#161616"><link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml"><script>document.documentElement.dataset.theme='dark';try{const t=localStorage.getItem('p45ang-preview-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}</script><link rel="stylesheet" href="../../assets/style.css?v=1882546ee251"><script src="../../assets/search-index.js?v=dbf56943dd2b" defer></script><script src="../../assets/app.js?v=7c40c5a47500" defer></script><link rel="canonical" href="https://apdlgg.github.io/P45ang/categories/ctf-wargame/"><link rel="stylesheet" href="../../assets/preview.css?v=1779f360d8d7"><script src="../../assets/daily-landscape.js?v=395f1801e278" defer></script><script src="../../assets/preview-palettes.js?v=aea380ab58ae" defer></script><script src="../../assets/preview.js?v=52e4c897c13f" defer></script></head><body class="preview-stage"><a class="skip-link" href="#main">본문으로 건너뛰기</a><header class="site-header"><div class="header-inner"><a class="brand" href="../../index.html#home" aria-label="P45ang 홈"><strong>P45ang</strong></a><nav class="main-nav" aria-label="주 메뉴" id="main-nav"><a href="../../index.html#home" data-preview-nav="home">홈</a><a href="../../index.html#records" data-preview-nav="records" aria-current="page">기록</a><a href="../../index.html#archive" data-preview-nav="archive">아카이브</a><a href="../../index.html#news" data-preview-nav="news">보안뉴스</a><a href="../../index.html#about" data-preview-nav="about">정보</a></nav><div class="header-actions"><button class="search-trigger" data-open-search aria-label="글 검색"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button><button class="icon-button theme-toggle" aria-label="테마 전환"><svg class="icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 13a9 9 0 0 1-10-10 9 9 0 1 0 10 10Z"/></svg><svg class="icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v2m0 18v2M1 12h2m18 0h2M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button><button class="icon-button mobile-toggle" aria-label="메뉴 열기" aria-controls="main-nav" aria-expanded="false"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></div></header>
+   <main id="main" class="page-shell preview-sheet category-page">
     <div class="page-intro">
-     <a class="breadcrumb" href="/P45ang/">기록 /</a>
+     <a class="breadcrumb" href="../../index.html">기록 /</a>
      <div class="eyebrow">분야별 기록</div>
-     <h1>CTF/Wargame<span class="heading-count">0</span></h1>
+     <h1>CTF/Wargame<span class="heading-count">1</span></h1>
     </div>
     
-  <nav class="category-tabs" aria-label="카테고리">
+  <nav class="category-tabs" id="record-categories" aria-label="카테고리">
    <div class="category-nav">
-    <a class="category-link " href="/P45ang/" >
-     <span>전체 기록</span><small>0</small>
+    <a class="category-link" href="../../index.html" >
+     <span>전체 기록</span><small>3</small>
     </a>
     
-     <a class="category-link "
-        href="/P45ang/categories/development/"
+     <a class="category-link"
+        href="../development/index.html"
         >
-      <span>개발</span><small>0</small>
+      <span>개발</span><small>2</small>
      </a>
-     <a class="category-link selected"
-        href="/P45ang/categories/ctf-wargame/"
+     <a class="category-link"
+        href="index.html"
         aria-current="page">
-      <span>CTF/Wargame</span><small>0</small>
+      <span>CTF/Wargame</span><small>1</small>
      </a>
-     <a class="category-link "
-        href="/P45ang/categories/bug-bounty/"
+     <a class="category-link"
+        href="../bug-bounty/index.html"
         >
-      <span>Bug Bounty</span><small>0</small>
+      <span>Bug Bounty</span>
      </a>
-     <a class="category-link "
-        href="/P45ang/categories/writing/"
+     <a class="category-link"
+        href="../writing/index.html"
         >
-      <span>블로그/기술문서</span><small>0</small>
+      <span>블로그/기술문서</span>
      </a>
-     <a class="category-link "
-        href="/P45ang/categories/research/"
+     <a class="category-link"
+        href="../research/index.html"
         >
-      <span>논문/컨퍼런스</span><small>0</small>
+      <span>논문/컨퍼런스</span>
      </a>
-     <a class="category-link "
-        href="/P45ang/categories/challenges/"
+     <a class="category-link"
+        href="../challenges/index.html"
         >
-      <span>공모전/자격증</span><small>0</small>
+      <span>공모전/자격증</span>
      </a>
    </div>
   </nav>
     <section class="notes-main" aria-label="CTF/Wargame 글 목록">
-     <div class="list-topline"><span>게시글 0개</span><span>최신순</span></div>
-     <div class="post-grid"><div class="empty-note"><p>아직 게시글이 없습니다.</p><a class="text-link" href="/P45ang/">전체 기록으로 돌아가기 <svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div></div>
+     <div class="list-topline"><span>게시글 1개</span><span>최신순</span></div>
+     <div class="post-grid">
+  <article class="post-card">
+   <a class="card-link" href="../../posts/preview-first-ctf/index.html">
+    <div class="card-info">
+     <div class="post-eyebrow"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4m0 0c5-4 9 4 14 0v10c-5 4-9-4-14 0"/></svg>CTF/Wargame<span class="note-label">예시 글</span></div>
+     <h3>CTF 첫 풀이와 오답</h3>
+     <p>첫 시도에서 막힌 지점과 다시 확인한 단서</p>
+     <div class="card-tags"><span>#CTF</span><span>#오답</span></div>
+     <div class="post-meta">
+      <time datetime="2026-09-18">2026.09.18</time><span>·</span><span>1분 읽기</span>
+      <span class="card-arrow"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+     </div>
+    </div>
+   </a>
+  </article></div>
     </section>
-   </main><footer class="site-footer"><div><a class="footer-brand" href="/P45ang/">P45ang</a></div><div class="footer-right"><span>© 2026 P45ang</span><a class="footer-github" href="https://github.com/apdlgg" target="_blank" rel="noopener noreferrer">GitHub <svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4 1-4-2-6-2m12 5v-3.5c0-1 .1-1.4-.5-2 3-.3 6-1.5 6-6.5a5 5 0 0 0-1.4-3.5A5 5 0 0 0 19 3s-1-.3-3.5 1.3a12 12 0 0 0-7 0C6 2.7 5 3 5 3a5 5 0 0 0-.1 3.5A5 5 0 0 0 3.5 10c0 5 3 6.2 6 6.5-.6.6-.5 1.2-.5 2V22"/></svg></a></div></footer><dialog class="search-dialog" aria-labelledby="search-title"><div class="search-dialog-head"><h2 id="search-title">기록 검색</h2><button class="icon-button" data-close-search aria-label="검색 닫기"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><label class="search-input-wrap"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="global-search" type="search" placeholder="제목, 내용, 태그로 찾아보세요" autocomplete="off" aria-label="검색어"></label><p class="search-meta" id="search-meta" role="status"></p><div id="search-results"></div><div class="search-help">검색 닫기<kbd>ESC</kbd></div></dialog></body></html>
+   </main><footer class="site-footer"><div><a class="footer-brand" href="../../index.html#home">P45ang</a></div><div class="footer-right"><span>© 2026 P45ang</span><a class="footer-github" href="https://github.com/apdlgg" target="_blank" rel="noopener noreferrer">GitHub <svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4 1-4-2-6-2m12 5v-3.5c0-1 .1-1.4-.5-2 3-.3 6-1.5 6-6.5a5 5 0 0 0-1.4-3.5A5 5 0 0 0 19 3s-1-.3-3.5 1.3a12 12 0 0 0-7 0C6 2.7 5 3 5 3a5 5 0 0 0-.1 3.5A5 5 0 0 0 3.5 10c0 5 3 6.2 6 6.5-.6.6-.5 1.2-.5 2V22"/></svg></a></div></footer><dialog class="search-dialog" aria-labelledby="search-title"><div class="search-dialog-head"><h2 id="search-title">기록 검색</h2><button class="icon-button" data-close-search aria-label="검색 닫기"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><label class="search-input-wrap"><svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="global-search" type="search" placeholder="제목, 내용, 태그로 찾아보세요" autocomplete="off" aria-label="검색어"></label><p class="search-meta" id="search-meta" role="status"></p><div id="search-results"></div><div class="search-help">검색 닫기<kbd>ESC</kbd></div></dialog></body></html>

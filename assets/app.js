@@ -1,14 +1,13 @@
 (() => {
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const base = document.body.dataset.base || '';
   const themeButton = $('.theme-toggle');
   const updateThemeLabel = () => themeButton?.setAttribute('aria-label', document.documentElement.dataset.theme === 'dark' ? '밝은 테마로 전환' : '어두운 테마로 전환');
   updateThemeLabel();
   themeButton?.addEventListener('click', () => {
     const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = theme;
-    try { localStorage.setItem('p45ang-theme', theme); } catch {}
+    try { localStorage.setItem('p45ang-preview-theme', theme); } catch {}
     updateThemeLabel();
   });
   const menuButton = $('.mobile-toggle');
@@ -25,29 +24,15 @@
   const searchInput = $('#global-search');
   const results = $('#search-results');
   const meta = $('#search-meta');
-  let index;
-  let loading;
-  let loadError = false;
+  const index = globalThis.p45angSearchIndex;
+  const siteRoot = new URL('../', document.currentScript.src);
   let searchTimer;
-  async function loadIndex() {
-    if (index) return;
-    if (!loading) {
-      loadError = false;
-      loading = fetch(`${base}/search.json`).then(response => {
-        if (!response.ok) throw new Error('검색 자료를 가져오지 못했습니다.');
-        return response.json();
-      }).then(data => { index = data; }).catch(() => { loadError = true; }).finally(() => { loading = null; });
-    }
-    await loading;
-  }
   function renderResults() {
-    if (loadError) {
+    if (!Array.isArray(index)) {
       meta.textContent = '검색 자료를 불러오지 못했습니다.';
-      results.innerHTML = '<div class="search-empty">연결을 확인한 뒤 다시 시도해주세요.<br><button class="text-link" id="retry-search">다시 불러오기 →</button></div>';
-      $('#retry-search').addEventListener('click', async () => { meta.textContent = '기록을 불러오는 중…'; await loadIndex(); renderResults(); });
+      results.replaceChildren();
       return;
     }
-    if (!index) { meta.textContent = '기록을 불러오는 중…'; results.innerHTML = ''; return; }
     if (!index.length) {
       meta.textContent = '공개된 글 0편';
       results.innerHTML = '<div class="search-empty">아직 게시글이 없습니다.</div>';
@@ -57,14 +42,12 @@
     const terms = query.split(/\s+/).filter(Boolean);
     const matching = index.filter(p => terms.every(term => `${p.title} ${p.summary} ${p.category} ${p.tags.join(' ')} ${p.text}`.toLocaleLowerCase('ko').includes(term)));
     meta.textContent = query ? `“${searchInput.value.trim()}” 검색 결과 ${matching.length}편` : `전체 기록 ${index.length}편 · 제목, 내용, 태그를 검색합니다`;
-    results.innerHTML = matching.length ? matching.map(p => `<a class="search-result" href="${esc(p.url)}"><small>${esc(p.category)} · ${esc(p.date.replaceAll('-', '.'))}</small><h3>${esc(p.title)}</h3><p>${esc(p.summary)}</p></a>`).join('') : '<div class="search-empty">아직 일치하는 기록이 없어요.<br>다른 단어로 찾아보세요.</div>';
+    results.innerHTML = matching.length ? matching.map(p => `<a class="search-result" href="${esc(new URL(p.url, siteRoot).href)}"><small>${esc(p.category)} · ${esc(p.date.replaceAll('-', '.'))}</small><h3>${esc(p.title)}</h3><p>${esc(p.summary)}</p></a>`).join('') : '<div class="search-empty">아직 일치하는 기록이 없어요.<br>다른 단어로 찾아보세요.</div>';
   }
-  async function openSearch(value = '') {
+  function openSearch(value = '') {
     if (!dialog.open) dialog.showModal();
     searchInput.value = value;
     searchInput.focus();
-    renderResults();
-    await loadIndex();
     renderResults();
   }
   document.querySelectorAll('[data-open-search]').forEach(button => button.addEventListener('click', () => openSearch()));
