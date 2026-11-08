@@ -176,12 +176,6 @@
   if (photos?.length && document.currentScript?.src && typeof landscapeIndex === 'function') {
     const root = new URL('../', document.currentScript.src);
     const credits = document.querySelectorAll('[data-photo-credit]');
-    const cover = document.querySelector('.preview-cover');
-    const coverCaption = cover ? document.createElement('p') : null;
-    if (coverCaption) {
-      coverCaption.className = 'preview-cover-caption';
-      cover.querySelector('p')?.after(coverCaption);
-    }
     let photoId;
     let timer;
     function updatePhoto() {
@@ -200,10 +194,6 @@
           credit.href = photo.sourceUrl;
           credit.textContent = photo.author + ' · ' + photo.provider;
         }
-        if (coverCaption) {
-          const seoul = new Date(now.getTime() + 9 * 36e5);
-          coverCaption.textContent = String(seoul.getUTCMonth() + 1).padStart(2, '0') + '.' + String(seoul.getUTCDate()).padStart(2, '0') + ' · ' + photo.title;
-        }
         photoDialog?.setAttribute('aria-label', '풍경만 보기 · ' + photo.title);
       }
       timer = setTimeout(updatePhoto, Math.max(1000, nextLandscapeChange(now) - Date.now() + 100));
@@ -213,45 +203,116 @@
     addEventListener('pagehide', () => clearTimeout(timer));
     document.addEventListener('visibilitychange', () => { if (!document.hidden) updatePhoto(); });
 
-    // 글 카드 썸네일: 글을 쓴 날에 보여 줬을 풍경 사진(assets/landscapes/thumbs/)
-    function dayPhoto(value) {
-      const date = new Date(value + 'T12:00:00+09:00');
-      return Number.isNaN(date.getTime()) ? null : photos[landscapeIndex(date, photos.length)];
+  }
+
+  // 스크롤하면 배경 사진이 최대 10px까지 흐려진다. 움직임 줄이기를 켠 환경에서는 쓰지 않는다.
+  if (motion.matches) {
+    const docEl = document.documentElement;
+    let blur = -1;
+    let queued = false;
+    const applyBlur = () => {
+      queued = false;
+      const next = Math.round(Math.min(1, scrollY / Math.max(1, innerHeight * .8)) * 10);
+      if (next === blur) return;
+      blur = next;
+      docEl.style.setProperty('--preview-blur', next + 'px');
+    };
+    addEventListener('scroll', () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(applyBlur);
+    }, { passive: true });
+    addEventListener('resize', applyBlur);
+    applyBlur();
+  }
+
+  // 글 카드·아카이브 썸네일: 글 본문의 첫 번째 이미지. 이미지가 없으면 태그 이름이 적힌 기본 썸네일.
+  // 카드에 data-thumb="이미지 주소"를 적으면 그 이미지를 먼저 쓰고, 이미지를 빼고 싶으면 <img data-no-thumb>.
+  function safeUrl(value, base) {
+    try {
+      const url = new URL(value, base);
+      return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '';
+    } catch {
+      return '';
     }
-    function thumbnail(photo) {
-      const figure = document.createElement('figure');
-      figure.className = 'preview-thumb';
-      const image = document.createElement('img');
-      image.src = new URL(photo.src.replace('/landscapes/', '/landscapes/thumbs/'), root).href;
-      image.alt = '';
-      image.width = 720;
-      image.height = 374;
-      image.loading = 'lazy';
-      image.decoding = 'async';
-      const caption = document.createElement('figcaption');
-      caption.textContent = '그날의 풍경 · ' + photo.title;
-      figure.append(image, caption);
-      return figure;
+  }
+  function readCache(key) {
+    try { return sessionStorage.getItem(key); } catch { return null; }
+  }
+  function writeCache(key, value) {
+    try { sessionStorage.setItem(key, value); } catch { /* 저장소를 못 쓰면 매번 새로 읽는다 */ }
+  }
+  async function firstImage(href) {
+    const key = 'p45ang-thumb:' + href;
+    const cached = readCache(key);
+    if (cached !== null) return cached;
+    try {
+      const response = await fetch(href);
+      if (!response.ok) return '';
+      const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+      const image = doc.querySelector('.prose img[src]:not([data-no-thumb])');
+      const found = image ? safeUrl(image.getAttribute('src'), href) : '';
+      writeCache(key, found);
+      return found;
+    } catch {
+      return '';
     }
-    for (const item of document.querySelectorAll('.preview-entry, .post-card')) {
-      const value = item.querySelector('time[datetime]')?.getAttribute('datetime') ?? '';
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) continue;
-      const photo = dayPhoto(value);
-      if (!photo) continue;
-      const figure = thumbnail(photo);
+  }
+  function thumbLabel(item) {
+    const tag = item.querySelector('.card-tags span')?.textContent.replace(/^#/, '').trim();
+    if (tag) return tag;
+    return item.querySelector('.preview-entry-meta')?.textContent.split('·')[1]?.trim() || '';
+  }
+  function buildThumb(item) {
+    const figure = document.createElement('figure');
+    figure.className = 'preview-thumb';
+    figure.setAttribute('aria-hidden', 'true');
+    const fallback = document.createElement('div');
+    fallback.className = 'preview-thumb-fallback';
+    fallback.append(Object.assign(document.createElement('span'), { textContent: thumbLabel(item) }));
+    figure.append(fallback);
+    return figure;
+  }
+  function showImage(figure, src) {
+    const image = new Image();
+    image.alt = '';
+    image.decoding = 'async';
+    image.addEventListener('load', () => {
+      figure.append(image);
+      requestAnimationFrame(() => figure.classList.add('has-image'));
+    }, { once: true });
+    image.src = src;
+  }
+  const thumbs = new Map();
+  async function loadThumb(item) {
+    const figure = thumbs.get(item);
+    if (!figure) return;
+    const link = item.matches('a[href]') ? item : item.querySelector('a[href]');
+    const src = item.dataset.thumb ? safeUrl(item.dataset.thumb, location.href) : link ? await firstImage(link.href) : '';
+    if (src) showImage(figure, src);
+  }
+  const thumbObserver = 'IntersectionObserver' in window
+    ? new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          thumbObserver.unobserve(entry.target);
+          loadThumb(entry.target);
+        }
+      }, { rootMargin: '300px 0px' })
+    : null;
+  for (const item of document.querySelectorAll('.preview-entry, .post-card')) {
+    const figure = buildThumb(item);
+    thumbs.set(item, figure);
+    if (item.classList.contains('preview-entry')) {
+      figure.classList.add('preview-visual');
       const old = item.querySelector('.preview-visual');
-      if (item.classList.contains('preview-entry')) {
-        figure.classList.add('preview-visual');
-        if (old) old.replaceWith(figure);
-        else item.append(figure);
-      } else {
-        (item.querySelector('.card-link') ?? item).prepend(figure);
-      }
-      figure.querySelector('img').addEventListener('error', () => {
-        if (old) figure.replaceWith(old);
-        else figure.remove();
-      }, { once: true });
+      if (old) old.replaceWith(figure);
+      else item.append(figure);
+    } else {
+      (item.querySelector('.card-link') ?? item).prepend(figure);
     }
+    if (thumbObserver) thumbObserver.observe(item);
+    else loadThumb(item);
   }
 
   const newsList = document.querySelector('[data-news-list]');
