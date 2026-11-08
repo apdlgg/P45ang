@@ -1,13 +1,18 @@
 :root {
   --preview-photo: url("./landscapes/36-mountain-u-1527pjeb6jg.webp");
-  --preview-accent: var(--brand-text);
   --preview-photo-accent-light: #526b3c;
   --preview-photo-accent-dark: #a9bb96;
   --preview-photo-accent: var(--preview-photo-accent-light);
-  --preview-outline: color-mix(in srgb, var(--line) 75%, var(--secondary));
+  --preview-accent: var(--preview-photo-accent);
+  /* 그날 사진의 포인트 컬러를 시트와 카드 바탕에 섞는 비율. 0%면 예전 회색 그대로 */
+  --preview-tint: 4%;
+  --preview-sheet: color-mix(in srgb, var(--paper), var(--preview-photo-accent) var(--preview-tint));
+  --preview-card: color-mix(in srgb, var(--surface), var(--preview-photo-accent) var(--preview-tint));
+  --preview-outline: color-mix(in srgb, color-mix(in srgb, var(--line) 75%, var(--secondary)), var(--preview-photo-accent) 14%);
 }
 :root[data-theme="dark"] {
   --preview-photo-accent: var(--preview-photo-accent-dark);
+  --preview-tint: 6%;
 }
 
 .preview-stage {
@@ -148,7 +153,7 @@
   max-width: none;
   margin-inline: auto;
   padding: clamp(27px, 5.8vw, 84px) clamp(20px, 5.2vw, 76px);
-  background-color: var(--paper);
+  background-color: var(--preview-sheet);
   border: 1px solid var(--preview-outline);
   color: var(--ink);
   box-shadow: 0 8px 20px rgb(0 0 0 / 22%), 0 28px 70px rgb(0 0 0 / 24%);
@@ -190,7 +195,7 @@
   padding: clamp(15px, 2vw, 26px);
   border: 1px solid var(--preview-outline);
   border-block-start-color: color-mix(in srgb, var(--preview-outline) 73%, var(--ink));
-  background-color: var(--surface);
+  background-color: var(--preview-card);
   box-shadow: var(--preview-card-shadow);
 }
 .preview-category-icon {
@@ -202,9 +207,9 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.preview-category-icon,
 .preview-category-arrow,
 .preview-category-copy { color: var(--secondary); }
+.preview-category-icon { color: var(--preview-photo-accent); }
 .preview-category-arrow { font: 18px/1 var(--sans); }
 .preview-category-title,
 .preview-category-copy {
@@ -319,7 +324,7 @@
   left: 50%;
   width: 8px;
   height: 8px;
-  border: 1px solid var(--paper);
+  border: 1px solid var(--preview-sheet);
   background: var(--preview-photo-accent);
   transform: translate(-50%, -50%) rotate(45deg);
 }
@@ -416,7 +421,7 @@
 .preview-news-item,
 .preview-about-data > div,
 .preview-news-tools :is(input, select) {
-  background-color: var(--surface);
+  background-color: var(--preview-card);
 }
 :where(.preview-records) .post-card,
 .preview-entry,
@@ -527,3 +532,37 @@
 @media (max-width: 420px) {
   .preview-news-tools { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* 그날의 사진 색을 쓰는 작은 요소들 */
+::selection { background: color-mix(in srgb, var(--preview-photo-accent) 35%, transparent); }
+.preview-cover .preview-cover-caption {
+  margin-top: 8px;
+  font: 13px/1.5 var(--mono);
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--preview-photo-accent-dark) 66%, white);
+  text-shadow: 0 1px 14px rgb(0 0 0 / 60%);
+}
+.preview-records-kicker,
+.preview-about-kicker { color: var(--preview-photo-accent); }
+.post-eyebrow > .icon { color: var(--preview-photo-accent); }
+.card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.card-tags span {
+  padding: 1px 7px;
+  border: 1px solid var(--preview-outline);
+  color: var(--preview-photo-accent);
+  font-size: 11px;
+}
+
+/* 글 카드와 아카이브의 "그날의 풍경" 썸네일 */
+.preview-thumb { margin: 0; }
+.preview-thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 720 / 374;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--preview-card);
+}
+.preview-thumb figcaption { margin-top: 6px; color: var(--secondary); font: 11px/1.4 var(--mono); }
+.post-card .preview-thumb { margin-bottom: 14px; }

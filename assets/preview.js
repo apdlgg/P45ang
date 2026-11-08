@@ -123,10 +123,65 @@
     photoDialog.addEventListener('close', () => { if (!photoOpener.hidden) photoOpener.focus({ preventScroll: true }); });
   }
 
+  // 포인트 컬러: 사진의 대표색에서 색상을 뽑는다.
+  // 어두운 사진은 저장된 포인트 컬러가 회색에 가까워서, 색상만 대표색을 따르고 밝기는 배경 대비 5:1에 맞춘다.
+  // 사진 자체가 흑백에 가까우면 기본 연두(preview.css의 기본값과 같다)를 쓴다.
+  const FALLBACK_ACCENT = { dark: '#a9bb96', light: '#526b3c' };
+  const isHex = value => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+  const toRgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  function toHsl(hex) {
+    const [r, g, b] = toRgb(hex).map(v => v / 255);
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const d = max - min;
+    const l = (max + min) / 2;
+    let h = 0;
+    if (d) {
+      h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h = (h * 60 + 360) % 360;
+    }
+    return [h, d ? d / (1 - Math.abs(2 * l - 1)) : 0, l];
+  }
+  function fromHsl(h, s, l) {
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    return '#' + [r, g, b].map(v => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join('');
+  }
+  function luminance(hex) {
+    const [r, g, b] = toRgb(hex).map(v => {
+      v /= 255;
+      return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+    });
+    return .2126 * r + .7152 * g + .0722 * b;
+  }
+  function contrast(a, b) {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (hi + .05) / (lo + .05);
+  }
+  function accentsFor(photo) {
+    if (!isHex(photo.dominant)) return { dark: photo.darkAccent, light: photo.lightAccent };
+    const [h, s, l] = toHsl(photo.dominant);
+    if (s < .18 || Math.max(...toRgb(photo.dominant)) < 24 || l > .95) return FALLBACK_ACCENT;
+    const sat = Math.min(.6, Math.max(.35, s));
+    let dark = .62;
+    let light = .34;
+    while (dark < .9 && contrast(fromHsl(h, sat, dark), '#161616') < 5) dark += .02;
+    while (light > .1 && contrast(fromHsl(h, sat, light), '#fafafa') < 5) light -= .02;
+    return { dark: fromHsl(h, sat, dark), light: fromHsl(h, sat, light) };
+  }
+
   const photos = globalThis.p45angDailyPhotos;
   if (photos?.length && document.currentScript?.src && typeof landscapeIndex === 'function') {
     const root = new URL('../', document.currentScript.src);
     const credits = document.querySelectorAll('[data-photo-credit]');
+    const cover = document.querySelector('.preview-cover');
+    const coverCaption = cover ? document.createElement('p') : null;
+    if (coverCaption) {
+      coverCaption.className = 'preview-cover-caption';
+      cover.querySelector('p')?.after(coverCaption);
+    }
     let photoId;
     let timer;
     function updatePhoto() {
@@ -137,12 +192,17 @@
         photoId = photo.id;
         const url = new URL(photo.src, root).href;
         const style = document.documentElement.style;
+        const accents = accentsFor(photo);
         style.setProperty('--preview-photo', 'url("' + url + '")');
-        style.setProperty('--preview-photo-accent-dark', photo.darkAccent);
-        style.setProperty('--preview-photo-accent-light', photo.lightAccent);
+        style.setProperty('--preview-photo-accent-dark', accents.dark);
+        style.setProperty('--preview-photo-accent-light', accents.light);
         for (const credit of credits) {
           credit.href = photo.sourceUrl;
           credit.textContent = photo.author + ' · ' + photo.provider;
+        }
+        if (coverCaption) {
+          const seoul = new Date(now.getTime() + 9 * 36e5);
+          coverCaption.textContent = String(seoul.getUTCMonth() + 1).padStart(2, '0') + '.' + String(seoul.getUTCDate()).padStart(2, '0') + ' · ' + photo.title;
         }
         photoDialog?.setAttribute('aria-label', '풍경만 보기 · ' + photo.title);
       }
@@ -152,6 +212,46 @@
     addEventListener('pageshow', updatePhoto);
     addEventListener('pagehide', () => clearTimeout(timer));
     document.addEventListener('visibilitychange', () => { if (!document.hidden) updatePhoto(); });
+
+    // 글 카드 썸네일: 글을 쓴 날에 보여 줬을 풍경 사진(assets/landscapes/thumbs/)
+    function dayPhoto(value) {
+      const date = new Date(value + 'T12:00:00+09:00');
+      return Number.isNaN(date.getTime()) ? null : photos[landscapeIndex(date, photos.length)];
+    }
+    function thumbnail(photo) {
+      const figure = document.createElement('figure');
+      figure.className = 'preview-thumb';
+      const image = document.createElement('img');
+      image.src = new URL(photo.src.replace('/landscapes/', '/landscapes/thumbs/'), root).href;
+      image.alt = '';
+      image.width = 720;
+      image.height = 374;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      const caption = document.createElement('figcaption');
+      caption.textContent = '그날의 풍경 · ' + photo.title;
+      figure.append(image, caption);
+      return figure;
+    }
+    for (const item of document.querySelectorAll('.preview-entry, .post-card')) {
+      const value = item.querySelector('time[datetime]')?.getAttribute('datetime') ?? '';
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) continue;
+      const photo = dayPhoto(value);
+      if (!photo) continue;
+      const figure = thumbnail(photo);
+      const old = item.querySelector('.preview-visual');
+      if (item.classList.contains('preview-entry')) {
+        figure.classList.add('preview-visual');
+        if (old) old.replaceWith(figure);
+        else item.append(figure);
+      } else {
+        (item.querySelector('.card-link') ?? item).prepend(figure);
+      }
+      figure.querySelector('img').addEventListener('error', () => {
+        if (old) figure.replaceWith(old);
+        else figure.remove();
+      }, { once: true });
+    }
   }
 
   const newsList = document.querySelector('[data-news-list]');
