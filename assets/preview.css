@@ -606,3 +606,15 @@
   .preview-stage .preview-sheet { background-color: var(--preview-sheet); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .preview-category-link { background-color: var(--preview-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
+
+/* 본문(마크다운) 보강: 인라인 코드, 이미지 간격 */
+.prose :not(pre) > code {
+  padding: .1em .38em;
+  border: 1px solid var(--preview-outline);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--preview-card) 80%, transparent);
+  font: .88em var(--mono);
+  overflow-wrap: anywhere;
+}
+.prose img { display: block; max-width: 100%; height: auto; margin: 22px 0; border-radius: 2px; }
+.prose h4 { margin: 28px 0 8px; font-size: 1.02em; letter-spacing: -.02em; }
