@@ -1,0 +1,42 @@
+name: 보안뉴스 스크랩
+description: 기사·게시글 주소와 한 줄 메모를 남깁니다 (저장소 소유자·협업자만 사이트에 반영됩니다)
+title: "[뉴스] "
+labels: ["뉴스"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: 기사 주소
+      description: X 게시글이나 기사 주소를 붙여 넣으세요.
+      placeholder: https://
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: 제목
+      description: X 게시글이면 "작성자 - 핵심 내용"처럼 짧게 적으세요.
+    validations:
+      required: true
+  - type: textarea
+    id: note
+    attributes:
+      label: 한 줄 메모
+      description: 이 기사에서 기억해 둘 점을 한두 줄로 적습니다.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: 출처
+      description: 선택. 비우면 X 주소는 "X", 그 밖에는 사이트 주소로 채워집니다.
+  - type: input
+    id: tag
+    attributes:
+      label: 태그
+      description: 선택. 한 단어 (예 공급망)
+  - type: input
+    id: published
+    attributes:
+      label: 원문 공개일
+      description: 선택. 2026-11-12 형식
