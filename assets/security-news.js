@@ -8,6 +8,13 @@ globalThis.p45angSecurityNews = [
     "note": "Cursor가 Fireworks AI에 발급한 키가 유출되면서 공격자가 코딩 기록과 자격증명을 훔치고, Cursor 마켓플레이스 캐시에 백도어가 심어진 Claude Code 확장 프로그램을 배포한 보안 사고"
   },
   {
+    "date": "2026-11-14",
+    "title": "zerodayalpha - Chrome 제로데이 RCE (CVE-2026-125350)",
+    "source": "X",
+    "url": "https://x.com/zerodayalpha/status/2120784163754373186",
+    "note": "XSLT 재진입으로 인한 libxslt 캐시 TOCTOU → 렌더러 UAF 취약점. 아무 웹페이지에서 공격 가능하며, 9줄 패치로 수정되어 Chrome 157에 반영됨. 완전한 시스템 장악에는 추가 권한 상승(EoP)이 필요함."
+  },
+  {
     "date": "2026-11-07",
     "publishedDate": "2025-03-15",
     "title": "GitHub Actions 공급망 침해 사례",
