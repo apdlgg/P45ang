@@ -1,0 +1,52 @@
+name: publish-from-issue
+
+# Publishes content submitted through the issue forms (new post / security news).
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  publish:
+    # Only issues opened by the owner or collaborators are processed.
+    if: contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Convert issue to content and publish
+        env:
+          RESULT_FILE: ${{ runner.temp }}/result.json
+        run: |
+          # Issue text is never passed to this shell. tools/issue.mjs reads the event file directly.
+          for attempt in 1 2 3; do
+            node tools/issue.mjs
+            if [ "$(jq -r .ok "$RESULT_FILE")" != "true" ]; then break; fi
+            git add -A
+            git -c user.name="p45ang-build" -c user.email="actions@users.noreply.github.com" commit -qm "post: publish from issue #${{ github.event.issue.number }}"
+            if git push; then exit 0; fi
+            # If someone else pushed meanwhile, rebuild on top of the latest state.
+            git fetch -q origin main
+            git reset -q --hard origin/main
+            git clean -fdq
+          done
+          if [ "$(jq -r .ok "$RESULT_FILE")" = "true" ]; then
+            echo '{"ok":false}' > "$RESULT_FILE"
+            echo "Could not publish (the repository kept changing). Please try again in a moment." > "${RESULT_FILE%.json}.md"
+          fi
+      - name: Comment on the issue and close it
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ github.event.issue.number }}
+          RESULT_FILE: ${{ runner.temp }}/result.json
+        run: |
+          [ -f "$RESULT_FILE" ] || exit 0
+          [ "$(jq -r .skip "$RESULT_FILE")" = "true" ] && exit 0
+          gh issue comment "$NUMBER" --body-file "${RESULT_FILE%.json}.md"
+          if [ "$(jq -r .ok "$RESULT_FILE")" = "true" ]; then gh issue close "$NUMBER" --reason completed; fi
