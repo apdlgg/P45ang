@@ -1,5 +1,17 @@
 globalThis.p45angSearchIndex = [
   {
+    "title": "[미션] [필수미션] '나'에 대해 기록하기",
+    "summary": "1. 현재 나는 무엇을 중요하게 생각하는가?",
+    "category": "블로그/기술문서",
+    "tags": [
+      "미션",
+      "자기소개"
+    ],
+    "text": "1. 현재 나는 무엇을 중요하게 생각하는가?",
+    "url": "posts/post-3/index.html",
+    "date": "2026-11-14"
+  },
+  {
     "title": "HTTP 요청 헤더 비교",
     "summary": "같은 요청에서 Accept 헤더를 바꾸기 전후의 응답 비교",
     "category": "개발",
