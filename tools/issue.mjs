@@ -21,13 +21,33 @@ const IMAGE_HOST = /^https:\/\/(github\.com\/user-attachments\/assets\/|user-ima
 class UserError extends Error {}
 
 // ───────────── 이슈 양식 읽기 ─────────────
-export function parseForm(body) {
+// 양식의 칸 이름과 순서. 본문 안의 "### 소제목"을 칸으로 착각하지 않도록, 정해진 순서대로만 찾고
+// 마지막 칸(본문 / 원문 공개일)은 끝까지를 그 칸의 내용으로 본다.
+const FORMS = {
+  post: ['제목', '분야', '요약', '태그', '주소 이름', '본문'],
+  news: ['기사 주소', '제목', '한 줄 메모', '출처', '태그', '원문 공개일'],
+};
+export function formKind(body) {
+  const first = String(body ?? '').replace(/\r\n?/g, '\n').match(/^### +(.+?) *$/m)?.[1];
+  return Object.entries(FORMS).find(([, order]) => order[0] === first)?.[0] ?? null;
+}
+export function parseForm(body, kind = formKind(body)) {
+  const text = String(body ?? '').replace(/\r\n?/g, '\n');
   const fields = {};
-  const parts = String(body ?? '').replace(/\r\n?/g, '\n').split(/^### +(.+?) *$/m);
-  for (let i = 1; i < parts.length; i += 2) {
-    const value = parts[i + 1].trim();
-    fields[parts[i].trim()] = value === '_No response_' ? '' : value;
+  const order = FORMS[kind] ?? [];
+  const found = [];
+  let from = 0;
+  for (const label of order) {
+    const re = new RegExp(`^### +${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} *$`, 'm');
+    const m = re.exec(text.slice(from));
+    if (!m) continue;
+    found.push({ label, start: from + m.index, end: from + m.index + m[0].length });
+    from = from + m.index + m[0].length;
   }
+  found.forEach((f, i) => {
+    const value = text.slice(f.end, i + 1 < found.length ? found[i + 1].start : text.length).trim();
+    fields[f.label] = value === '_No response_' ? '' : value;
+  });
   return fields;
 }
 const oneLine = (s, max) => String(s ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -164,10 +184,11 @@ export async function handleIssue(event, opts = {}) {
   try {
     if (!issue || event.action !== 'opened' || issue.pull_request) return { ok: false, skip: true, message: '새로 열린 이슈가 아니라서 건너뜁니다.' };
     if (!TRUSTED.has(issue.author_association)) return { ok: false, skip: true, message: '저장소 소유자·협업자가 아니라서 처리하지 않습니다.' };
-    const fields = parseForm(issue.body);
+    const kind = formKind(issue.body);
+    const fields = parseForm(issue.body, kind);
     let result;
-    if ('기사 주소' in fields) result = makeNews(fields, issue, root, created);
-    else if ('본문' in fields) result = await makePost(fields, issue, root, opts, created);
+    if (kind === 'news') result = makeNews(fields, issue, root, created);
+    else if (kind === 'post') result = await makePost(fields, issue, root, opts, created);
     else throw new UserError('"새 글" 또는 "보안뉴스" 양식으로 작성한 이슈가 아닙니다. New issue에서 양식을 골라 다시 올려 주세요.');
     (opts.runBuild ?? runBuild)(root);
     return { ok: true, ...result };
