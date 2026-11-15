@@ -1,0 +1,9 @@
+{
+  "date": "2026-11-16",
+  "publishedDate": "2026-11-12",
+  "title": "Check Point 0-Day",
+  "source": "X",
+  "url": "https://x.com/The_Cyber_News/status/2121502390960414879",
+  "note": "Check Point Gaia OS의 DynamicCLI 취약점(CVE-2026-123039)으로, 장비 내부의 낮은 권한을 최고 관리자(root) 권한으로 높일 수 있다. 실제 악용이 확인됐으며 Jumbo Hotfix 적용이 필요하다.",
+  "tag": "권한상승"
+}
