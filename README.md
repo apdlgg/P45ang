@@ -30,13 +30,13 @@
 | `title` | O | 제목 |
 | `date` | O | `2026-11-12` 형식 |
 | `category` | O | `development` `ctf-wargame` `bug-bounty` `writing` `research` `challenges` |
-| `summary` | | 목록·검색에 보이는 요약 (없으면 본문 앞부분) |
+| `summary` | | 목록·검색·글 설명에 쓰는 요약. 생략하면 이미지와 소제목을 건너뛴 첫 글 문단 사용 |
 | `tags` | | `[HTTP, 실습]` |
 | `thumbnail` | | 썸네일로 쓸 같은 폴더의 이미지, 또는 `none` |
 | `draft` | | `true` 이면 공개하지 않음 |
-| `readingTime` | | 읽는 시간(분). 없으면 글자 수로 계산 |
 
 본문에서는 `##`(큰 제목)과 `###`(작은 제목)이 목차에 들어갑니다. 코드 블록, 표, 링크, 이미지를 쓸 수 있습니다.
+요약은 기록 카드, 검색 결과, 검색엔진·링크 공유용 설명과 RSS에 사용합니다. 글 화면의 제목 아래에는 표시하지 않습니다. 텍스트 문단이 없는 글은 요약을 비워 둡니다.
 보안 글에 코드를 적어도 안전하도록 **본문에 쓴 HTML 태그는 실행되지 않고 글자 그대로** 보입니다.
 파일 이름에 띄어쓰기가 있는 이미지는 `![설명](<화면 캡처.png>)` 처럼 `<>` 로 감싸세요.
 
@@ -63,13 +63,24 @@
 ## 자동 빌드
 
 - `.github/workflows/publish-issue.yml` : 이슈 양식 → `content/` 파일 → 사이트 생성 → 커밋.
-- `.github/workflows/build.yml` : `content/` 나 사이트 파일을 직접 올렸을 때 `node tools/build.mjs` 로 생성.
+
+제공된 자동화는 이슈 양식으로 게시할 때 생성기를 실행합니다. 파일을 직접 수정하는 경우에는 `node tools/build.mjs`를 실행한 다음, 원본과 생성된 페이지를 함께 올립니다.
 
 `tools/build.mjs` 는 `posts/`, `categories/`, `archive/`, 홈 목록, `assets/search-index.js`, `assets/security-news.js`, `sitemap.xml`, `feed.xml` 을 만듭니다.
 오류가 하나라도 있으면 아무것도 바꾸지 않고 실패하며, Actions 로그에 어떤 파일의 무엇이 문제인지 적힙니다.
 위 생성물과 `index.html` 의 `<!--build:...-->` 사이는 자동 생성 영역이니 직접 고치지 마세요.
 
-두 워크플로 모두 필요한 권한을 파일 안에 적어 두었습니다. 그래도 커밋 단계에서 권한 오류가 나면
+이슈 게시 워크플로는 필요한 권한을 파일 안에 적어 두었습니다. 그래도 커밋 단계에서 권한 오류가 나면
 Settings → Actions → General → Workflow permissions 를 **Read and write permissions** 로 바꿔 보세요.
 
 내 컴퓨터에서 미리 확인하려면 Node 18+ 에서 `node tools/build.mjs` 후 `python -m http.server`.
+
+## 검증
+
+`node --test tools/test.mjs`로 목차의 빠른 이동과 이미지로 시작하는 글의 요약 처리를 검사할 수 있습니다.
+
+## GitHub Pages 표시 파일
+
+`.nojekyll`은 `index.html`과 같은 최상위 위치에 둡니다. 생성기를 실행할 때 파일이 없으면 자동으로 만듭니다.
+
+업로드 목록에서 누락된다면 GitHub의 Add file → Create new file에서 파일 이름을 `.nojekyll`로 입력해 만들 수 있습니다. 내용은 비워 두거나 `# P45ang static site`처럼 설명 한 줄을 적으면 됩니다. 파일 이름에 `.txt`를 붙이지 않습니다.

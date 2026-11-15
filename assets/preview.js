@@ -226,7 +226,69 @@
     applyBlur();
   }
 
-  // 글 카드·아카이브 썸네일은 tools/build.mjs가 HTML에 미리 넣어 둔다(본문 첫 이미지, 없으면 태그 이름 기본 썸네일).
+  // 글 카드·아카이브 썸네일은 tools/build.mjs가 HTML에 미리 넣어 둔다(본문 첫 이미지가 있을 때만).
+
+  // 목차의 강조 항목과 진행선은 같은 읽기 위치를 기준으로 갱신한다.
+  (() => {
+    const nav = document.querySelector('.toc nav');
+    const fill = nav?.querySelector('.toc-fill');
+    const article = document.querySelector('#article-body');
+    if (!nav || !fill || !article) return;
+    const items = [...nav.querySelectorAll('a')].map(link => {
+      let id = '';
+      try { id = decodeURIComponent(link.hash.slice(1)); } catch { /* 건너뜀 */ }
+      return { link, heading: id ? document.getElementById(id) : null };
+    }).filter(item => item.heading);
+    if (!items.length) return;
+    let frame = 0;
+    let active = -1;
+    function draw() {
+      frame = 0;
+      if (!nav.offsetParent) return; // 모바일처럼 목차를 숨긴 화면
+      const y = scrollY + innerHeight * 0.35;
+      const top = element => element.getBoundingClientRect().top + scrollY;
+      const center = item => item.link.offsetTop + item.link.offsetHeight / 2;
+      const tops = items.map(item => top(item.heading));
+      const end = top(article) + article.offsetHeight;
+      let at = -1;
+      tops.forEach((value, index) => { if (y >= value) at = index; });
+      let height;
+      const atEnd = scrollY > 0 && scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
+      if (atEnd && end <= scrollY + innerHeight) {
+        at = items.length - 1;
+        height = nav.clientHeight;
+      } else if (at < 0) {
+        const start = top(article);
+        height = tops[0] > start + 1 ? center(items[0]) * Math.min(1, Math.max(0, (y - start) / (tops[0] - start))) : 0;
+      } else {
+        const next = at + 1 < items.length ? tops[at + 1] : end;
+        const ratio = Math.min(1, Math.max(0, (y - tops[at]) / Math.max(1, next - tops[at])));
+        const from = center(items[at]);
+        const to = at + 1 < items.length ? center(items[at + 1]) : nav.clientHeight;
+        height = from + (to - from) * ratio;
+      }
+      nav.style.setProperty('--toc-fill', `${Math.round(height)}px`);
+      const nextActive = Math.max(0, at);
+      if (nextActive !== active) {
+        const previous = items[active]?.link;
+        previous?.classList.remove('active');
+        previous?.removeAttribute('aria-current');
+        const current = items[nextActive].link;
+        current.classList.add('active');
+        current.setAttribute('aria-current', 'location');
+        active = nextActive;
+      }
+    }
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(draw); };
+    addEventListener('scroll', schedule, { passive: true });
+    addEventListener('resize', schedule);
+    addEventListener('load', schedule);
+    addEventListener('pageshow', schedule);
+    addEventListener('hashchange', schedule);
+    article.addEventListener('load', schedule, true);
+    if ('ResizeObserver' in window) { const ro = new ResizeObserver(schedule); ro.observe(article); ro.observe(nav); }
+    draw();
+  })();
 
   const newsList = document.querySelector('[data-news-list]');
   if (newsList) {

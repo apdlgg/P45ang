@@ -42,7 +42,7 @@
     const terms = query.split(/\s+/).filter(Boolean);
     const matching = index.filter(p => terms.every(term => `${p.title} ${p.summary} ${p.category} ${p.tags.join(' ')} ${p.text}`.toLocaleLowerCase('ko').includes(term)));
     meta.textContent = query ? `“${searchInput.value.trim()}” 검색 결과 ${matching.length}편` : `전체 기록 ${index.length}편 · 제목, 내용, 태그를 검색합니다`;
-    results.innerHTML = matching.length ? matching.map(p => `<a class="search-result" href="${esc(new URL(p.url, siteRoot).href)}"><small>${esc(p.category)} · ${esc(p.date.replaceAll('-', '.'))}</small><h3>${esc(p.title)}</h3><p>${esc(p.summary)}</p></a>`).join('') : '<div class="search-empty">아직 일치하는 기록이 없어요.<br>다른 단어로 찾아보세요.</div>';
+    results.innerHTML = matching.length ? matching.map(p => `<a class="search-result" href="${esc(new URL(p.url, siteRoot).href)}"><small>${esc(p.category)} · ${esc(p.date.replaceAll('-', '.'))}</small><h3>${esc(p.title)}</h3>${p.summary ? `<p>${esc(p.summary)}</p>` : ''}</a>`).join('') : '<div class="search-empty">아직 일치하는 기록이 없어요.<br>다른 단어로 찾아보세요.</div>';
   }
   function openSearch(value = '') {
     if (!dialog.open) dialog.showModal();
@@ -83,9 +83,6 @@
     const success = document.execCommand('copy'); area.remove();
     if (!success) throw new Error('복사 실패');
   }
-  $('.share-button')?.addEventListener('click', async () => {
-    try { await copy(location.href); toast('글 주소를 복사했어요.'); } catch { toast('주소창에서 글 주소를 직접 복사해주세요.'); }
-  });
   document.querySelectorAll('.prose pre').forEach(pre => {
     const code = pre.querySelector('code');
     const button = document.createElement('button');
@@ -99,27 +96,4 @@
     const wrap = document.createElement('div'); wrap.className = 'table-scroll'; wrap.tabIndex = 0; wrap.setAttribute('role', 'region'); wrap.setAttribute('aria-label', '표 · 좌우로 스크롤 가능');
     table.before(wrap); wrap.append(table);
   });
-  const progress = $('.reading-progress');
-  const article = $('#article-body');
-  if (progress && article) {
-    const updateProgress = () => {
-      const top = article.getBoundingClientRect().top + scrollY;
-      const available = article.offsetHeight - innerHeight + 110;
-      const ratio = Math.max(0, Math.min(1, (scrollY - top + 110) / Math.max(1, available)));
-      progress.style.width = `${ratio * 100}%`;
-    };
-    document.addEventListener('scroll', updateProgress, { passive: true });
-    window.addEventListener('resize', updateProgress); updateProgress();
-    const links = [...document.querySelectorAll('.toc a')];
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) if (entry.isIntersecting) {
-        links.forEach(link => {
-          const active = decodeURIComponent(link.hash.slice(1)) === entry.target.id;
-          link.classList.toggle('active', active);
-          if (active) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current');
-        });
-      }
-    }, { rootMargin: '-100px 0px -60% 0px', threshold: 0 });
-    document.querySelectorAll('.prose h2, .prose h3').forEach(heading => observer.observe(heading));
-  }
 })();

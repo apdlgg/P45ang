@@ -29,10 +29,7 @@ const fail = (where, msg) => errors.push(`✗ ${where}\n    ${msg}`);
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const xml = esc;
 const svg = d => `<svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
-const ICON_CLOCK = '<svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
-const ICON_COPY = '<svg class="icon " width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/></svg>';
 const ICON_ARROW = svg('M5 12h14m-6-6 6 6-6 6');
-const ICON_CARD_ARROW = ICON_ARROW;
 const dotDate = d => d.replace(/-/g, '.');
 const read = f => fs.readFileSync(f, 'utf8');
 function write(file, text) {
@@ -155,7 +152,7 @@ function render(body, ctx) {
 }
 
 function plainText(html) {
-  return html.replace(/<pre[\s\S]*?<\/pre>/g, m => m).replace(/<[^>]+>/g, ' ')
+  return html.replace(/<[^>]+>/g, ' ')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ').trim();
 }
@@ -206,12 +203,13 @@ function loadPosts() {
       else if (t.includes('/') || t.includes('..') || !fs.existsSync(path.join(dir, t))) fail(where, `thumbnail "${t}" 파일을 글 폴더에서 찾을 수 없습니다.`);
       else thumb = { src: encodeURIComponent(t), external: false };
     } else if (data.thumbnail !== 'none' && images[0]) thumb = images[0];
-    const summary = (data.summary || text.slice(0, 90)).trim();
+    // 이미지뿐인 문단은 건너뛰고, 글자가 있는 첫 문단을 목록 요약으로 사용한다.
+    const firstParagraph = Array.from(html.matchAll(/<p>([\s\S]*?)<\/p>/g), match => plainText(match[1])).find(Boolean) ?? '';
+    const summary = data.summary?.trim() || (firstParagraph.length > 100 ? firstParagraph.slice(0, 100).trimEnd() + '…' : firstParagraph);
     posts.push({
       slug, dir, where,
       title: data.title.trim(), date: data.date, category: data.category,
       summary, tags: data.tags ?? [], example: isTrue(data.example),
-      minutes: data.readingTime ? Number(data.readingTime) : Math.max(1, Math.round(text.replace(/\s/g, '').length / 600)),
       html, toc, thumb, text,
     });
   }
@@ -261,32 +259,31 @@ function head({ root, title, ogTitle, desc, type, canonical, noindex, canonicalL
   const canon = `<link rel="canonical" href="${SITE}${canonical}">`;
   return `<!doctype html><!-- ${MARK} --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><meta name="author" content="P45ang"><meta property="og:title" content="${esc(ogTitle)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:type" content="${type}"><meta name="theme-color" content="#161616"><link rel="icon" href="${root}${a}favicon.svg" type="image/svg+xml"><script>document.documentElement.dataset.theme='dark';try{const t=localStorage.getItem('p45ang-preview-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}</script><link rel="stylesheet" href="${root}${a}style.css?v=${V}"><script src="${root}${a}search-index.js?v=${V}" defer></script><script src="${root}${a}app.js?v=${V}" defer></script>${noindex ? '<meta name="robots" content="noindex">' : ''}${canonicalLast ? '' : canon}<link rel="stylesheet" href="${root}${a}preview.css?v=${V}"><script src="${root}${a}daily-landscape.js?v=${V}" defer></script><script src="${root}${a}preview-palettes.js?v=${V}" defer></script><script src="${root}${a}preview.js?v=${V}" defer></script>${canonicalLast ? canon : ''}</head>`;
 }
-const shellTop = (root, { progress = false, archive = false } = {}) => {
+const shellTop = (root, { archive = false } = {}) => {
   let t = top.replaceAll('{{root}}', root);
   if (archive) t = t.replace(' aria-current="page">기록', '>기록').replace('data-preview-nav="archive">', 'data-preview-nav="archive" aria-current="page">');
-  if (progress) t = t.replace('</header>', '</header><div class="reading-progress" aria-hidden="true"></div>');
   return t;
 };
 const shellBottom = root => bottom.replaceAll('{{root}}', root);
 
 function thumbHtml(p, postsPrefix, extraClass = '') {
-  const label = p.tags[0] || CAT.get(p.category).label;
-  const img = p.thumb ? `<img src="${esc(p.thumb.external ? p.thumb.src : `${postsPrefix}${p.slug}/${p.thumb.src}`)}" alt="" loading="lazy" decoding="async">` : '';
-  return `<figure class="preview-thumb${extraClass ? ' ' + extraClass : ''}${p.thumb ? ' has-image' : ''}" aria-hidden="true"><div class="preview-thumb-fallback"><span>${esc(label)}</span></div>${img}</figure>`;
+  if (!p.thumb) return '';
+  const src = p.thumb.external ? p.thumb.src : `${postsPrefix}${p.slug}/${p.thumb.src}`;
+  return `<figure class="preview-thumb${extraClass ? ' ' + extraClass : ''}" aria-hidden="true"><img src="${esc(src)}" alt="" loading="lazy" decoding="async"></figure>`;
 }
 const eyebrow = (p, space) => `<div class="post-eyebrow">${svg(CAT.get(p.category).icon)}${space ? ' ' : ''}${esc(CAT.get(p.category).label)}${p.example ? '<span class="note-label">예시 글</span>' : ''}</div>`;
 
-function card(p, { postsPrefix, filter = false, indent = '' }) {
+function card(p, { postsPrefix, filter = false }) {
   return `<article class="post-card"${filter ? ` data-record-category="${p.category}"` : ''}>
    <a class="card-link" href="${postsPrefix}${p.slug}/index.html">
     ${thumbHtml(p, postsPrefix)}<div class="card-info">
      ${eyebrow(p, false)}
      <h3>${esc(p.title)}</h3>
-     <p>${esc(p.summary)}</p>
+     ${p.summary ? `<p>${esc(p.summary)}</p>` : ''}
      <div class="card-tags">${p.tags.map(t => `<span>#${esc(t)}</span>`).join('')}</div>
      <div class="post-meta">
-      <time datetime="${p.date}">${dotDate(p.date)}</time><span>·</span><span>${p.minutes}분 읽기</span>
-      <span class="card-arrow">${ICON_CARD_ARROW}</span>
+      <time datetime="${p.date}">${dotDate(p.date)}</time>
+      <span class="card-arrow">${ICON_ARROW}</span>
      </div>
     </div>
    </a>
@@ -324,7 +321,7 @@ function archiveTimeline(posts, prefix) {
   const groups = new Map();
   for (const p of posts) { const k = p.date.slice(0, 7); (groups.get(k) ?? groups.set(k, []).get(k)).push(p); }
   const months = [...groups].map(([k, list]) => `<section class="preview-month" aria-labelledby="month-${k}"><h2 id="month-${k}"><time datetime="${k}">${k.replace('-', '.')}</time></h2><div class="preview-month-list">${list.map(p =>
-    `<a class="preview-entry" href="${prefix}${p.slug}/index.html" data-record-category="${p.category}">${thumbHtml(p, prefix, 'preview-visual')}<div class="preview-entry-meta"><time datetime="${p.date}">${p.date.slice(5).replace('-', '.')}</time> · ${esc(CAT.get(p.category).label)}${p.example ? ' · 예시 글' : ''}</div><h3>${esc(p.title)}</h3><p>${esc(p.summary)}</p></a>`).join('')}</div></section>`).join('');
+    `<a class="preview-entry" href="${prefix}${p.slug}/index.html" data-record-category="${p.category}">${thumbHtml(p, prefix, 'preview-visual')}<div class="preview-entry-meta"><time datetime="${p.date}">${p.date.slice(5).replace('-', '.')}</time> · ${esc(CAT.get(p.category).label)}${p.example ? ' · 예시 글' : ''}</div><h3>${esc(p.title)}</h3>${p.summary ? `<p>${esc(p.summary)}</p>` : ''}</a>`).join('')}</div></section>`).join('');
   return `<div class="preview-timeline" aria-label="월별 기록 타임라인"><div class="preview-timeline-rail" aria-hidden="true"></div>${months}</div>`;
 }
 
@@ -332,15 +329,16 @@ function postPage(p, all) {
   const c = CAT.get(p.category);
   const related = [...all.filter(o => o !== p && o.category === p.category), ...all.filter(o => o !== p && o.category !== p.category)].slice(0, 2);
   const toc = p.toc.length
-    ? `<aside class="toc"><span class="eyebrow">이 글의 목차</span><nav aria-label="이 글의 목차">${p.toc.map(t => `<a class="${t.level === 3 ? 'toc-sub' : ''}" href="#${encodeURIComponent(t.id)}">${esc(t.text)}</a>`).join('')}</nav></aside>`
+    ? `<aside class="toc"><span class="eyebrow">이 글의 목차</span><nav aria-label="이 글의 목차"><span class="toc-fill" aria-hidden="true"></span>${p.toc.map(t => `<a class="${t.level === 3 ? 'toc-sub' : ''}" href="#${encodeURIComponent(t.id)}">${esc(t.text)}</a>`).join('')}</nav></aside>`
     : '';
+  const tags = p.tags.length ? `<div class="article-tags" aria-label="태그">${p.tags.map(t => `<button class="tag" data-search="${esc(t)}">#${esc(t)}</button>`).join('')}</div>` : '';
   const rel2 = related.length
     ? `<section class="related-posts"><div class="section-heading"><div><span class="eyebrow">함께 읽을 글</span><h2>이어서 읽어보세요</h2></div><a class="subtle-link" href="../../index.html#records">전체 기록 ${ICON_ARROW}</a></div><div class="post-grid">
   ${related.map(o => card(o, { postsPrefix: '../' })).join('\n  ')}</div></section>`
     : '';
   return head({ root: '../../', title: `${p.title} — P45ang`, ogTitle: p.title, desc: p.summary, type: 'article', canonical: `posts/${p.slug}/`, noindex: p.example, canonicalLast: true })
-    + shellTop('../../', { progress: true })
-    + `<main id="main" class="page-shell preview-sheet article-page"><a class="breadcrumb" href="../../index.html#records/${c.key}">← ${esc(c.label)}</a><header class="article-header">${eyebrow(p, true)}<h1>${esc(p.title)}</h1><p class="article-summary">${esc(p.summary)}</p><div class="article-byline"><span class="author-avatar">P</span><strong>P45ang</strong><span>·</span><time datetime="${p.date}">${dotDate(p.date)}</time><span>·</span><span>${ICON_CLOCK} ${p.minutes}분 읽기</span><button class="icon-button share-button" aria-label="글 주소 복사">${ICON_COPY}</button></div><div class="article-tags">${p.tags.map(t => `<button class="tag" data-search="${esc(t)}">#${esc(t)}</button>`).join('')}</div></header><div class="article-layout"><article class="prose" id="article-body">${p.html}</article>${toc}</div>${rel2}`
+    + shellTop('../../')
+    + `<main id="main" class="page-shell preview-sheet article-page"><a class="breadcrumb" href="../../index.html#records">← 기록</a><header class="article-header"><div class="article-meta">${svg(c.icon)}<a class="meta-category" href="../../categories/${c.key}/index.html">${esc(c.label)}</a>${p.example ? '<span class="note-label">예시 글</span>' : ''}<span class="sep" aria-hidden="true">·</span><time datetime="${p.date}">${dotDate(p.date)}</time><span class="sep" aria-hidden="true">·</span><a class="meta-author" href="../../index.html">P45ang</a></div><h1>${esc(p.title)}</h1></header><div class="article-layout${toc ? '' : ' no-toc'}"><div class="article-main"><article class="prose" id="article-body">${p.html}</article>${tags}</div>${toc}</div>${rel2}`
     + shellBottom('../../').replace('</main>', '</main><div class="toast" role="status" aria-live="polite"></div>');
 }
 
@@ -449,6 +447,8 @@ const posts = loadPosts();
 const news = loadNews();
 const out = new Map(); // 파일 → 내용 (오류가 없을 때만 한꺼번에 기록)
 if (!errors.length) {
+  const nojekyll = path.join(ROOT, '.nojekyll');
+  if (!fs.existsSync(nojekyll)) out.set(nojekyll, '');
   for (const p of posts) out.set(path.join(ROOT, 'posts', p.slug, 'index.html'), postPage(p, posts));
   for (const c of CATEGORIES) out.set(path.join(ROOT, 'categories', c.key, 'index.html'), categoryPage(c, posts));
   out.set(path.join(ROOT, 'archive', 'index.html'), archivePage(posts));
