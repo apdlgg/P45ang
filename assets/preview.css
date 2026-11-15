@@ -433,16 +433,6 @@
 }
 
 .toc a[aria-current="location"] { position: relative; color: var(--preview-accent); }
-.toc a[aria-current="location"]::before {
-  content: "";
-  position: absolute;
-  left: -4px;
-  top: calc(50% - 3px);
-  width: 6px;
-  height: 6px;
-  transform: rotate(45deg);
-  background: var(--preview-accent);
-}
 .preview-compare {
   margin: 24px 0 30px;
   border-top: 1px solid var(--line);
@@ -548,43 +538,21 @@
   font-size: 11px;
 }
 
-/* 글 카드·아카이브 썸네일: 본문의 첫 이미지, 없으면 태그 이름이 적힌 점 노트 */
-.preview-thumb { position: relative; margin: 0; overflow: hidden; border-radius: 2px; }
-.preview-thumb-fallback {
-  position: relative;
-  display: grid;
-  place-items: center;
+/* 썸네일은 글에서 지정한(또는 본문 첫) 이미지가 있을 때만 표시한다. */
+.preview-thumb {
+  margin: 0;
+  overflow: hidden;
   aspect-ratio: 720 / 374;
   border: 1px solid var(--preview-outline);
   border-radius: 2px;
-  background-color: var(--preview-card);
-  background-image: radial-gradient(circle, color-mix(in srgb, var(--preview-photo-accent) 42%, transparent) 1px, transparent 1.6px);
-  background-size: 18px 18px;
-  color: var(--preview-photo-accent);
-  font: 500 clamp(18px, 3vw, 30px)/1 var(--mono);
-  letter-spacing: -.04em;
-  text-transform: uppercase;
 }
-.preview-thumb-fallback::before,
-.preview-thumb-fallback::after {
-  content: "+";
-  position: absolute;
-  color: var(--secondary);
-  font: 14px/1 var(--mono);
-}
-.preview-thumb-fallback::before { top: 8px; left: 10px; }
-.preview-thumb-fallback::after { right: 10px; bottom: 8px; }
 .preview-thumb img {
-  position: absolute;
-  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center top;
-  opacity: 0;
-  transition: opacity 300ms ease;
 }
-.preview-thumb.has-image img { opacity: 1; }
 .post-card .preview-thumb { margin-bottom: 14px; }
 
 /* 유리판: 시트와 카테고리 카드 뒤로 풍경이 살짝 비친다. 글자 대비를 위해 불투명도는 높게 둔다. */
@@ -618,3 +586,134 @@
 }
 .prose img { display: block; max-width: 100%; height: auto; margin: 22px 0; border-radius: 2px; }
 .prose h4 { margin: 28px 0 8px; font-size: 1.02em; letter-spacing: -.02em; }
+
+/* ───────── 글 페이지 ─────────
+   본문에 집중되도록 시트를 더 넓고 불투명하게 하고, 이름·날짜 줄은 본문 크기에 맞춘다. */
+.preview-stage .preview-sheet.article-page {
+  --article-size: 17px;
+  --toc-w: clamp(150px, 13vw, 176px);
+  --toc-gap: clamp(28px, 4vw, 56px);
+  --article-col: 820px;
+  --preview-glass: 96%;
+  width: min(1280px, calc(100% - 2 * var(--preview-gutter)));
+  max-width: none;
+}
+.article-page .article-header,
+.article-page .article-layout,
+.article-page .related-posts {
+  margin-left: 0;
+  max-width: none;
+}
+.article-page .article-header { padding-top: 0; margin-bottom: clamp(22px, 3vw, 34px); }
+.article-page .article-header h1 {
+  max-width: none;
+  margin-top: 18px;
+  font-size: clamp(29px, 3.3vw, 42px);
+  line-height: 1.4;
+  letter-spacing: -.04em;
+}
+.article-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: var(--article-size);
+  line-height: 1.6;
+  color: var(--secondary);
+}
+.article-meta .icon { width: 1.05em; height: 1.05em; flex: none; }
+.article-meta a { color: inherit; border-radius: 4px; }
+.article-meta a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+.article-meta .meta-author { color: var(--ink); font-weight: 600; }
+.article-meta .sep { opacity: .5; }
+.article-meta time { font-family: inherit; font-size: inherit; }
+.article-meta .note-label { margin-left: 0; }
+.article-page > .breadcrumb { margin-left: -7px; }
+.article-page .article-main { min-width: 0; }
+.article-page .article-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 44px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.article-page .article-tags .tag { font-size: 13.5px; }
+.article-page .article-layout {
+  grid-template-columns: minmax(0, var(--article-col)) var(--toc-w);
+  justify-content: space-between;
+  gap: var(--toc-gap);
+  padding-top: clamp(24px, 3vw, 40px);
+}
+.article-page .prose { font-size: var(--article-size); line-height: 1.95; }
+.article-page .prose > p,
+.article-page .prose > ul,
+.article-page .prose > ol { color: color-mix(in srgb, var(--ink) 88%, var(--paper)); }
+.article-page .prose h2 { font-size: clamp(22px, 2.1vw, 27px); }
+.article-page .prose h3 { font-size: clamp(18px, 1.7vw, 21px); }
+.article-page .prose pre { font-size: 14px; }
+.article-page .prose table { font-size: 15px; }
+.article-page .prose blockquote { font-size: var(--article-size); }
+.article-page .related-posts { margin: 56px 0 0; }
+
+/* 목차(오른쪽): 읽은 만큼 선이 차오른다 */
+.article-page .article-layout.no-toc { grid-template-columns: minmax(0, var(--article-col)); }
+/* 제목과 본문은 같은 왼쪽 줄에 두고, 목차는 오른쪽 끝의 보조 색인으로 둔다 */
+.article-page .article-header { max-width: var(--article-col); }
+.article-page .toc { top: 104px; }
+.article-page .toc > .eyebrow { font-size: 11px; opacity: .6; }
+.article-page .toc nav { position: relative; }
+.toc-fill {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  width: 2px;
+  height: var(--toc-fill, 0px);
+  background: var(--preview-accent);
+  pointer-events: none;
+}
+.toc-fill::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  width: 6px;
+  height: 6px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--preview-accent);
+  opacity: 0;
+}
+.article-page .toc nav[style*="--toc-fill"] .toc-fill::after { opacity: 1; }
+.article-page .toc a {
+  font-size: 12.5px;
+  padding: 5px 0 5px 14px;
+  margin-left: 0;
+  border-left: 0;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--secondary) 62%, transparent);
+}
+.article-page .toc a.toc-sub { padding-left: 24px; font-size: 12px; }
+.article-page .toc a:hover { color: var(--ink); border-left-color: transparent; }
+.article-page .toc a.active,
+.article-page .toc a[aria-current="location"] { color: var(--ink); font-weight: 500; border-left-color: transparent; }
+
+/* 좁은 화면에서는 본문 폭을 우선하고 목차는 숨긴다 */
+@media (max-width: 900px) {
+  .article-page .toc { display: none; }
+  .article-page .article-layout,
+  .article-page .article-layout.no-toc { display: block; }
+}
+@media (max-width: 680px) {
+  .preview-stage .preview-sheet.article-page { --article-size: 16px; }
+  .article-meta { gap: 4px 14px; }
+  .article-meta .sep { display: none; }
+}
+
+/* 카드: 썸네일이 위에 들어가므로 카드 내용이 카드 밖으로 밀리지 않게 세로로 쌓는다 */
+.post-card .card-link { display: flex; flex-direction: column; }
+.post-card .card-info { height: auto; flex: 1 1 auto; }
+
+/* 한글은 단어 단위로 줄바꿈한다(긴 영문·주소는 넘치지 않게 끊는다). */
+.article-page .prose { word-break: keep-all; overflow-wrap: anywhere; }
+.article-page .article-header h1 { word-break: keep-all; overflow-wrap: anywhere; }
+.article-page .toc a { word-break: keep-all; overflow-wrap: anywhere; }
