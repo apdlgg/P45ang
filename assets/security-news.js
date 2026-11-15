@@ -10,6 +10,15 @@ globalThis.p45angSecurityNews = [
     "tag": "권한상승"
   },
   {
+    "date": "2026-11-16",
+    "publishedDate": "2026-11-14",
+    "title": "Apache Shiro 인증우회 취약점(CVE-2026-129349)",
+    "source": "X",
+    "url": "https://x.com/IntCyberDigest/status/2121804129773208045",
+    "note": "Apache Shiro 3.0.0 이하에서 LDAP 인증 캐시가 활성화되면, 로그인 정보가 캐시된 계정에 아무 비밀번호로 접속할 수 있다(CVE-2026-129349). 3.0.1 이상으로 업데이트하거나 LDAP 인증 캐시를 비활성화해야 한다.",
+    "tag": "인증우회"
+  },
+  {
     "date": "2026-11-14",
     "title": "The_Cyber_News - Cursor 키 유출",
     "source": "X",
