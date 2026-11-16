@@ -19,6 +19,14 @@ globalThis.p45angSecurityNews = [
     "tag": "인증우회"
   },
   {
+    "date": "2026-11-16",
+    "title": "Tor DDoS",
+    "source": "X",
+    "url": "https://x.com/DarkWebInformer/status/2122051715461534122",
+    "note": "Tor 중계 서버에 대량의 연결 요청이 집중돼 서버 자원을 소진시키는 DDoS 공격이 발생했다. Tor Project는 IPv6 관련 방어 기능을 보완한 0.4.9.17을 배포하고 중계 서버 운영자에게 업데이트를 권고했다.",
+    "tag": "#DDoS"
+  },
+  {
     "date": "2026-11-14",
     "title": "The_Cyber_News - Cursor 키 유출",
     "source": "X",
