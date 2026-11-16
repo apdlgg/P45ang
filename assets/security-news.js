@@ -27,6 +27,14 @@ globalThis.p45angSecurityNews = [
     "tag": "#DDoS"
   },
   {
+    "date": "2026-11-16",
+    "title": "메타 미흡한 개인정보 고지로 과징금 부과",
+    "source": "X",
+    "url": "https://x.com/TheHackersNews/status/2121928494527685015",
+    "note": "이탈리아 개인정보 감독기관은 Facebook Android 앱이 갤러리 추천 기능에 대한 구체적인 동의 없이 사진·영상·메타데이터에 접근했다고 판단해 Meta에 8억 500만 유로의 제재금을 부과했다. 해당 기능을 기본 비활성화하고 사용자에게 별도의 명확한 동의를 받도록 시정명령도 내렸다.",
+    "tag": "#개인정보보호"
+  },
+  {
     "date": "2026-11-14",
     "title": "The_Cyber_News - Cursor 키 유출",
     "source": "X",
