@@ -19,6 +19,15 @@ globalThis.p45angSecurityNews = [
   },
   {
     "date": "2026-11-18",
+    "publishedDate": "2026-11-18",
+    "title": "Microsoft Agent Framework PyPI 패키지 탈취",
+    "source": "X",
+    "url": "https://x.com/The_Cyber_News/status/2122898921504866683",
+    "note": "agent-framework 패키지의 악성 버전 1.26.1과 1.26.2가 PyPI에 올라왔다. 이 버전들은 파이썬이 시작될 때마다 실행되는 .pth 파일로, 패키지를 import하지 않아도 Azure·GitHub 자격 증명과 빌드 비밀값을 훔쳤다. 두 버전 모두 PyPI에서 삭제됐고 마지막 정상 버전은 1.26.0이다. 노출 시간은 약 1시간으로 짧았지만, 설치된 환경은 클라우드·CI 자격 증명이 유출될 수 있다.",
+    "tag": "#공급망공"
+  },
+  {
+    "date": "2026-11-18",
     "publishedDate": "2026-11-16",
     "title": "Optimizely 침해로 178개 대형 사이트에 악성코드 유",
     "source": "X",
