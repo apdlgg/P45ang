@@ -1,0 +1,9 @@
+{
+  "date": "2026-11-19",
+  "publishedDate": "2026-11-18",
+  "title": "Java4Shell 실제 공격 시도 관측, Chrome으로 위장",
+  "source": "X",
+  "url": "https://x.com/The_Cyber_News/status/2123293694254252447",
+  "note": "Cloudflare Cloudforce One이 Java4Shell(CVE-2026-114938)을 노린 공격 시도를 관측했고, 이 시도는 일반 Chrome 트래픽처럼 보이게 위장했다. 다만 공격 시도가 침해로 이어졌는지는 확인되지 않았다.",
+  "tag": "#원격코드실행"
+}
