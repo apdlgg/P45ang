@@ -19,6 +19,15 @@ globalThis.p45angSecurityNews = [
     "tag": "#원격코드실행"
   },
   {
+    "date": "2026-11-19",
+    "publishedDate": "2026-11-13",
+    "title": "Hello Again 공격, TPM 잠금 우회로 Windows Hello·BitLocker PIN 해독 가속",
+    "source": "X",
+    "url": "https://x.com/DarkWebInformer/status/2123115681260478721",
+    "note": "베를린공대 연구팀이 TPM 상태를 되돌려 PIN 오입력 잠금을 초기화하는 방법을 보였다. 이 방법으로 Windows Hello 4자리 PIN은 69일이 걸릴 것이 40시간으로, BitLocker 6자리 PIN은 19년이 걸릴 것이 20일로 줄어든다. 중간에 interposer를 두어 실행횟수 제한을 무시한다.",
+    "tag": "#TPM"
+  },
+  {
     "date": "2026-11-18",
     "publishedDate": "2026-11-16",
     "title": "macOS 27.3 베타 2, AI 앱의 전체 디스크 접근 통제 강화",
