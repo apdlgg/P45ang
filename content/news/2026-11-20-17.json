@@ -1,0 +1,9 @@
+{
+  "date": "2026-11-20",
+  "publishedDate": "2026-11-19",
+  "title": "PHP, critical 7건 포함 보안 패치 18건 배포",
+  "source": "X",
+  "url": "https://x.com/DarkWebInformer/status/2123435081524019632",
+  "note": "PHP Foundation이 11월 19일 보안 패치 18건을 냈고 7건이 critical이다. 10월 말부터 임시 설정(session.upload_progress.enabled=0)으로만 막던 원격 코드 실행 CVE-2026-115560도 함께 거론됐다.",
+  "tag": "#웹서버"
+}
