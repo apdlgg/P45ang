@@ -1,0 +1,8 @@
+{
+  "date": "2026-11-22",
+  "title": "GnuPG, GPGME 치명적 이중 해제 결함 경고(CVE-2026-129975)",
+  "source": "X",
+  "url": "https://x.com/TheHackersNews/status/2124097807435157635",
+  "note": "GnuPG를 연동하는 표준 라이브러리 GPGME에, 매우 긴 사용자 ID를 가진 조작된 OpenPGP 키가 이중 해제(double free)를 일으키는 결함이 있다. 앱 데이터 유출이 가능하고 원격 코드 실행도 배제되지 않는다.",
+  "tag": "#메모리손상"
+}
