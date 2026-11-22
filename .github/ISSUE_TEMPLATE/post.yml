@@ -13,6 +13,8 @@ body:
     id: category
     attributes:
       label: 분야
+      description: 글이 여러 분야에 걸치면 여러 개 골라도 됩니다(최대 3개).
+      multiple: true
       options:
         - 개발
         - CTF/Wargame
