@@ -8,6 +8,15 @@
   <url><loc>https://apdlgg.github.io/P45ang/categories/development/</loc></url>
   <url><loc>https://apdlgg.github.io/P45ang/categories/research/</loc></url>
   <url><loc>https://apdlgg.github.io/P45ang/categories/writing/</loc></url>
+  <url><loc>https://apdlgg.github.io/P45ang/posts/aslr-pie/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://apdlgg.github.io/P45ang/posts/command-injection/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://apdlgg.github.io/P45ang/posts/got-overwrite/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://apdlgg.github.io/P45ang/posts/nx/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://apdlgg.github.io/P45ang/posts/out-of-bounds/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://apdlgg.github.io/P45ang/posts/relro/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://apdlgg.github.io/P45ang/posts/stack-buffer-overflow/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://apdlgg.github.io/P45ang/posts/stack-canary/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://apdlgg.github.io/P45ang/posts/type-error/</loc><lastmod>2026-11-22</lastmod></url>
   <url><loc>https://apdlgg.github.io/P45ang/posts/post-4/</loc><lastmod>2026-11-14</lastmod></url>
   <url><loc>https://apdlgg.github.io/P45ang/</loc></url>
 </urlset>
