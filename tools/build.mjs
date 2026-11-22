@@ -69,6 +69,10 @@ function parseFrontMatter(raw, where) {
         while (i + 1 < lines.length && /^\s*-\s+/.test(lines[i + 1])) list.push(parseScalar(lines[++i].replace(/^\s*-\s+/, '')));
       } else list = rest.split(',').map(parseScalar);
       data.tags = list.map(t => t.replace(/^#/, '').trim()).filter(Boolean);
+    } else if (key === 'category') {
+      // 분야는 하나(category: development) 또는 여러 개(category: [ctf-wargame, writing])
+      const inner = rest.trim().replace(/^\[/, '').replace(/\]$/, '');
+      data.category = inner.split(',').map(parseScalar).map(v => String(v).trim()).filter(Boolean);
     } else data[key] = parseScalar(rest);
   }
   return { data, body: text.slice(m[0].length) };
@@ -152,7 +156,8 @@ function render(body, ctx) {
 }
 
 function plainText(html) {
-  return html.replace(/<[^>]+>/g, ' ')
+  // 굵게·코드 같은 글자 안 태그는 붙여서 지운다("값</strong>(카나리)"가 "값 (카나리)"가 되지 않게).
+  return html.replace(/<\/?(?:strong|em|b|i|code|a|span|del|s|mark|sub|sup|kbd)\b[^>]*>/gi, '').replace(/<[^>]+>/g, ' ')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ').trim();
 }
@@ -181,8 +186,14 @@ function loadPosts() {
       const d = new Date(data.date + 'T00:00:00Z');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date) || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== data.date) fail(where, `date "${data.date}"를 읽을 수 없습니다. 실제 있는 날짜를 2026-11-12 형식으로 적어 주세요.`);
     }
-    if (!data.category) fail(where, `머리말에 category(분야)가 없습니다. 사용 가능: ${CATEGORIES.map(c => c.key).join(', ')}`);
-    else if (!CAT.has(data.category)) fail(where, `category "${data.category}"는 없는 분야입니다. 사용 가능: ${CATEGORIES.map(c => c.key).join(', ')}`);
+    const cats = [];
+    if (!data.category?.length) fail(where, `머리말에 category(분야)가 없습니다. 사용 가능: ${CATEGORIES.map(c => c.key).join(', ')}`);
+    else for (const v of data.category) {
+      const c = CAT.get(v) ?? CATEGORIES.find(x => x.label === v);
+      if (!c) fail(where, `category "${v}"는 없는 분야입니다. 사용 가능: ${CATEGORIES.map(c => c.key).join(', ')}`);
+      else if (!cats.includes(c.key)) cats.push(c.key);
+    }
+    if (cats.length > 3) fail(where, 'category는 3개 이하로 적어 주세요.');
     if ((data.tags?.length ?? 0) > 8) fail(where, '태그는 8개 이하로 적어 주세요.');
     if (data.readingTime && !/^\d{1,3}$/.test(data.readingTime)) fail(where, 'readingTime은 분 단위 숫자만 적어 주세요. 예: 5');
     if (!body.trim()) fail(where, '본문이 비어 있습니다.');
@@ -208,7 +219,7 @@ function loadPosts() {
     const summary = data.summary?.trim() || (firstParagraph.length > 100 ? firstParagraph.slice(0, 100).trimEnd() + '…' : firstParagraph);
     posts.push({
       slug, dir, where,
-      title: data.title.trim(), date: data.date, category: data.category,
+      title: data.title.trim(), date: data.date, category: cats[0], categories: cats,
       summary, tags: data.tags ?? [], example: isTrue(data.example),
       html, toc, thumb, text,
     });
@@ -271,10 +282,11 @@ function thumbHtml(p, postsPrefix, extraClass = '') {
   const src = p.thumb.external ? p.thumb.src : `${postsPrefix}${p.slug}/${p.thumb.src}`;
   return `<figure class="preview-thumb${extraClass ? ' ' + extraClass : ''}" aria-hidden="true"><img src="${esc(src)}" alt="" loading="lazy" decoding="async"></figure>`;
 }
-const eyebrow = (p, space) => `<div class="post-eyebrow">${svg(CAT.get(p.category).icon)}${space ? ' ' : ''}${esc(CAT.get(p.category).label)}${p.example ? '<span class="note-label">예시 글</span>' : ''}</div>`;
+const catLabels = p => p.categories.map(k => CAT.get(k).label).join(' · ');
+const eyebrow = (p, space) => `<div class="post-eyebrow">${svg(CAT.get(p.category).icon)}${space ? ' ' : ''}${esc(catLabels(p))}${p.example ? '<span class="note-label">예시 글</span>' : ''}</div>`;
 
 function card(p, { postsPrefix, filter = false }) {
-  return `<article class="post-card"${filter ? ` data-record-category="${p.category}"` : ''}>
+  return `<article class="post-card"${filter ? ` data-record-category="${p.categories.join(' ')}"` : ''}>
    <a class="card-link" href="${postsPrefix}${p.slug}/index.html">
     ${thumbHtml(p, postsPrefix)}<div class="card-info">
      ${eyebrow(p, false)}
@@ -291,7 +303,7 @@ function card(p, { postsPrefix, filter = false }) {
 }
 
 function categoryNav(posts, mode) {
-  const count = k => posts.filter(p => p.category === k).length;
+  const count = k => posts.filter(p => p.categories.includes(k)).length;
   const small = n => (n ? `<small>${n}</small>` : '');
   const hrefAll = mode === 'home' ? '#records' : '../../index.html';
   const links = CATEGORIES.map(c => {
@@ -321,13 +333,14 @@ function archiveTimeline(posts, prefix) {
   const groups = new Map();
   for (const p of posts) { const k = p.date.slice(0, 7); (groups.get(k) ?? groups.set(k, []).get(k)).push(p); }
   const months = [...groups].map(([k, list]) => `<section class="preview-month" aria-labelledby="month-${k}"><h2 id="month-${k}"><time datetime="${k}">${k.replace('-', '.')}</time></h2><div class="preview-month-list">${list.map(p =>
-    `<a class="preview-entry" href="${prefix}${p.slug}/index.html" data-record-category="${p.category}">${thumbHtml(p, prefix, 'preview-visual')}<div class="preview-entry-meta"><time datetime="${p.date}">${p.date.slice(5).replace('-', '.')}</time> · ${esc(CAT.get(p.category).label)}${p.example ? ' · 예시 글' : ''}</div><h3>${esc(p.title)}</h3>${p.summary ? `<p>${esc(p.summary)}</p>` : ''}</a>`).join('')}</div></section>`).join('');
+    `<a class="preview-entry" href="${prefix}${p.slug}/index.html" data-record-category="${p.categories.join(' ')}">${thumbHtml(p, prefix, 'preview-visual')}<div class="preview-entry-meta"><time datetime="${p.date}">${p.date.slice(5).replace('-', '.')}</time> · ${esc(catLabels(p))}${p.example ? ' · 예시 글' : ''}</div><h3>${esc(p.title)}</h3>${p.summary ? `<p>${esc(p.summary)}</p>` : ''}</a>`).join('')}</div></section>`).join('');
   return `<div class="preview-timeline" aria-label="월별 기록 타임라인"><div class="preview-timeline-rail" aria-hidden="true"></div>${months}</div>`;
 }
 
 function postPage(p, all) {
   const c = CAT.get(p.category);
-  const related = [...all.filter(o => o !== p && o.category === p.category), ...all.filter(o => o !== p && o.category !== p.category)].slice(0, 2);
+  const shares = o => o.categories.some(k => p.categories.includes(k));
+  const related = [...all.filter(o => o !== p && shares(o)), ...all.filter(o => o !== p && !shares(o))].slice(0, 2);
   const toc = p.toc.length
     ? `<aside class="toc"><span class="eyebrow">이 글의 목차</span><nav aria-label="이 글의 목차"><span class="toc-fill" aria-hidden="true"></span>${p.toc.map(t => `<a class="${t.level === 3 ? 'toc-sub' : ''}" href="#${encodeURIComponent(t.id)}">${esc(t.text)}</a>`).join('')}</nav></aside>`
     : '';
@@ -338,12 +351,12 @@ function postPage(p, all) {
     : '';
   return head({ root: '../../', title: `${p.title} — P45ang`, ogTitle: p.title, desc: p.summary, type: 'article', canonical: `posts/${p.slug}/`, noindex: p.example, canonicalLast: true })
     + shellTop('../../')
-    + `<main id="main" class="page-shell preview-sheet article-page"><a class="breadcrumb" href="../../index.html#records">← 기록</a><header class="article-header"><div class="article-meta">${svg(c.icon)}<a class="meta-category" href="../../categories/${c.key}/index.html">${esc(c.label)}</a>${p.example ? '<span class="note-label">예시 글</span>' : ''}<span class="sep" aria-hidden="true">·</span><time datetime="${p.date}">${dotDate(p.date)}</time><span class="sep" aria-hidden="true">·</span><a class="meta-author" href="../../index.html">P45ang</a></div><h1>${esc(p.title)}</h1></header><div class="article-layout${toc ? '' : ' no-toc'}"><div class="article-main"><article class="prose" id="article-body">${p.html}</article>${tags}</div>${toc}</div>${rel2}`
+    + `<main id="main" class="page-shell preview-sheet article-page"><a class="breadcrumb" href="../../index.html#records">← 기록</a><header class="article-header"><div class="article-meta">${svg(c.icon)}${p.categories.map(k => `<a class="meta-category" href="../../categories/${k}/index.html">${esc(CAT.get(k).label)}</a>`).join('<span class="sep" aria-hidden="true">·</span>')}${p.example ? '<span class="note-label">예시 글</span>' : ''}<span class="sep" aria-hidden="true">·</span><time datetime="${p.date}">${dotDate(p.date)}</time><span class="sep" aria-hidden="true">·</span><a class="meta-author" href="../../index.html">P45ang</a></div><h1>${esc(p.title)}</h1></header><div class="article-layout${toc ? '' : ' no-toc'}"><div class="article-main"><article class="prose" id="article-body">${p.html}</article>${tags}</div>${toc}</div>${rel2}`
     + shellBottom('../../').replace('</main>', '</main><div class="toast" role="status" aria-live="polite"></div>');
 }
 
 function categoryPage(c, posts) {
-  const list = posts.filter(p => p.category === c.key);
+  const list = posts.filter(p => p.categories.includes(c.key));
   const body = list.length
     ? `<div class="post-grid">
   ${list.map(p => card(p, { postsPrefix: '../../posts/' })).join('\n  ')}</div>`
@@ -395,7 +408,7 @@ function indexPage(posts) {
 
 function searchIndex(posts) {
   const items = posts.map(p => ({
-    title: p.title, summary: p.summary, category: CAT.get(p.category).label, tags: p.tags,
+    title: p.title, summary: p.summary, category: catLabels(p), tags: p.tags,
     text: p.text.slice(0, 6000), url: `posts/${p.slug}/index.html`, date: p.date,
   }));
   return `globalThis.p45angSearchIndex = ${JSON.stringify(items, null, 2)};\n`;
@@ -411,7 +424,7 @@ function sitemap(posts) {
 function feed(posts) {
   const items = posts.filter(p => !p.example).slice(0, 30).map(p => {
     const link = `${SITE}posts/${p.slug}/`;
-    return `<item><title>${xml(p.title)}</title><link>${link}</link><guid isPermaLink="true">${link}</guid><pubDate>${new Date(p.date + 'T00:00:00Z').toUTCString()}</pubDate><category>${xml(CAT.get(p.category).label)}</category><description>${xml(p.summary)}</description></item>`;
+    return `<item><title>${xml(p.title)}</title><link>${link}</link><guid isPermaLink="true">${link}</guid><pubDate>${new Date(p.date + 'T00:00:00Z').toUTCString()}</pubDate>${p.categories.map(k => `<category>${xml(CAT.get(k).label)}</category>`).join('')}<description>${xml(p.summary)}</description></item>`;
   }).join('');
   return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>P45ang</title><link>${SITE}</link><description>P45ang의 개발·보안 학습과 활동 기록입니다.</description><language>ko</language>${items}</channel></rss>\n`;
 }

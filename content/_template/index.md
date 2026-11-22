@@ -2,6 +2,7 @@
 title: 글 제목을 여기에
 date: 2026-11-12
 category: development
+# category: [ctf-wargame, writing]   ← 여러 분야에 넣을 때(최대 3개, 첫 번째가 대표 분야)
 summary: 목록과 검색에 보이는 한두 줄 요약
 tags: [태그1, 태그2]
 # thumbnail: 대표사진.png   ← 쓰지 않으면 본문 첫 이미지가 썸네일, 이미지가 없으면 썸네일 없이 표시

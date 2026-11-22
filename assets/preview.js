@@ -60,7 +60,7 @@
     const category = filters.some(filter => filter.dataset.recordFilter === value) ? value : 'all';
     let total = 0;
     for (const card of recordCards) {
-      card.hidden = category !== 'all' && card.dataset.recordCategory !== category;
+      card.hidden = category !== 'all' && !card.dataset.recordCategory.split(' ').includes(category);
       if (!card.hidden) total++;
     }
     recordList.hidden = total === 0;

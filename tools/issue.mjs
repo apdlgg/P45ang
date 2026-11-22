@@ -115,8 +115,16 @@ async function localizeImages(body, dir, fetchImage, created) {
 async function makePost(fields, issue, root, opts, created) {
   const title = oneLine(fields['제목'], 120);
   if (!title) throw new UserError('제목이 비어 있습니다.');
-  const cat = CATEGORIES.find(c => c.label === fields['분야']);
-  if (!cat) throw new UserError(`분야를 고를 수 없습니다: "${fields['분야'] ?? ''}"`);
+  // 분야는 여러 개 고를 수 있다. GitHub는 "개발, 블로그/기술문서"처럼 쉼표로 이어서 보낸다.
+  const picked = String(fields['분야'] ?? '').split(/,\s*|\n/).map(s => s.trim()).filter(Boolean);
+  const cats = [];
+  for (const label of picked) {
+    const c = CATEGORIES.find(x => x.label === label);
+    if (!c) throw new UserError(`분야를 고를 수 없습니다: "${label}"`);
+    if (!cats.includes(c.key)) cats.push(c.key);
+  }
+  if (!cats.length) throw new UserError('분야를 하나 이상 골라 주세요.');
+  if (cats.length > 3) throw new UserError('분야는 3개 이하로 골라 주세요.');
   const rawBody = (fields['본문'] ?? '').trim();
   if (!rawBody) throw new UserError('본문이 비어 있습니다.');
 
@@ -130,7 +138,7 @@ async function makePost(fields, issue, root, opts, created) {
   const body = await localizeImages(rawBody, dir, opts.fetchImage ?? defaultFetchImage, created);
   const tags = [...new Set(String(fields['태그'] ?? '').split(/[,\n]/).map(t => oneLine(t.replace(/^#/, '').replace(/[\[\]",\\]/g, ''), 30)).filter(Boolean))].slice(0, 8);
   const q = s => `"${s.replace(/\\/g, '').replace(/"/g, '”')}"`;
-  const head = ['---', `title: ${q(title)}`, `date: ${kstDay(issue.created_at)}`, `category: ${cat.key}`];
+  const head = ['---', `title: ${q(title)}`, `date: ${kstDay(issue.created_at)}`, cats.length === 1 ? `category: ${cats[0]}` : `category: [${cats.join(', ')}]`];
   const summary = oneLine(fields['요약'], 160);
   if (summary) head.push(`summary: ${q(summary)}`);
   if (tags.length) head.push(`tags: [${tags.map(q).join(', ')}]`);
