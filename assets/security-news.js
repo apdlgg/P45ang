@@ -9,6 +9,14 @@ globalThis.p45angSecurityNews = [
     "tag": "#공급망공격"
   },
   {
+    "date": "2026-11-24",
+    "title": "방치된 ASP.NET 라이브러리 Idunno.AntiCsrf(CVE-2026-131914), 패치 없이 실제 악용",
+    "source": "X",
+    "url": "https://x.com/The_Cyber_News/status/2124900532250894699",
+    "note": "2008년 이후 업데이트가 없는 ASP.NET WebForms용 CSRF 방어 모듈이 검증 없이 토큰을 역직렬화해, HTTP 요청 하나로 IIS 서버에서 인증 없이 코드를 실행할 수 있다. 실제 악용이 확인됐고 프로젝트가 중단돼 패치가 나올 수 없어, 연구자들은 라이브러리 사용 중단을 권고했다. 영향도: 높음 — 인증 없는 원격 코드 실행이 실제 악용되고 패치도 없지만, 오래된 레거시 앱에만 해당한다.",
+    "tag": "#원격코드실행"
+  },
+  {
     "date": "2026-11-23",
     "publishedDate": "2026-10-21",
     "title": "Cisco Expressway 치명적 결함(CVE-2026-76466), PoC 공개 직후 실제 침해",
