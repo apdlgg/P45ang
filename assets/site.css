@@ -1314,13 +1314,13 @@ summary:focus-visible {
 /* 카드에 마우스를 올리면(또는 Tab으로 이동하면) 같은 목록의 나머지 카드를 살짝 흐린다 */
 @media (hover: hover) {
   :is(.post-grid, .preview-month-list):has(> :is(.post-card, .preview-entry):is(:hover, :focus-within)) > :is(.post-card, .preview-entry):not(:hover, :focus-within) {
-    opacity: .6;
+    opacity: .82;
   }
 }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   :is(.post-grid, .preview-month-list) > :is(.post-card, .preview-entry) { transition: filter 220ms ease, opacity 220ms ease, border-color 160ms ease; }
   :is(.post-grid, .preview-month-list):has(> :is(.post-card, .preview-entry):is(:hover, :focus-within)) > :is(.post-card, .preview-entry):not(:hover, :focus-within) {
-    filter: blur(2px) saturate(.75);
+    filter: blur(.6px) saturate(.85); /* 다른 카드도 읽을 수 있을 만큼만 흐리게 */
   }
 }
 @media (hover: none) {
