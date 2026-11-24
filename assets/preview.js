@@ -290,109 +290,6 @@
     draw();
   })();
 
-  const newsList = document.querySelector('[data-news-list]');
-  if (newsList) {
-    const queryInput = document.querySelector('[data-news-query]');
-    const monthSelect = document.querySelector('[data-news-month]');
-    const status = document.querySelector('[data-news-status]');
-    function validDate(value) {
-      if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-      const date = new Date(value);
-      return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
-    }
-    const source = Array.isArray(globalThis.p45angSecurityNews) ? globalThis.p45angSecurityNews : [];
-    const news = source.flatMap(item => {
-      if (!item || !validDate(item.date)) return [];
-      if (![item.title, item.note, item.source].every(value => typeof value === 'string' && value.trim())) return [];
-      try {
-        const url = new URL(item.url);
-        if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return [];
-        return [{ ...item, url: url.href }];
-      } catch {
-        return [];
-      }
-    }).sort((a, b) => b.date.localeCompare(a.date));
-    function node(tag, text, className) {
-      const element = document.createElement(tag);
-      if (text) element.textContent = text;
-      if (className) element.className = className;
-      return element;
-    }
-    const months = new Map();
-    for (const item of news) {
-      const month = item.date.slice(0, 7);
-      if (!months.has(month)) months.set(month, []);
-      months.get(month).push(item);
-    }
-    const groups = [];
-    for (const [month, items] of months) {
-      const label = month.replace('-', '.');
-      const option = node('option', label);
-      option.value = month;
-      monthSelect?.append(option);
-      const section = node('details', '', 'preview-news-month');
-      section.open = groups.length === 0;
-      const summary = node('summary');
-      const count = node('small', items.length + '건');
-      summary.append(node('span', label), count);
-      section.append(summary);
-      const rows = [];
-      for (const item of items) {
-        const article = node('article', '', 'preview-news-item');
-        const meta = node('div', '', 'preview-news-meta');
-        const time = node('time', '작성일 ' + item.date.replaceAll('-', '.'));
-        time.dateTime = item.date;
-        meta.append(time);
-        if (validDate(item.publishedDate)) {
-          const published = node('time', '원문 ' + item.publishedDate.replaceAll('-', '.'));
-          published.dateTime = item.publishedDate;
-          meta.append(published);
-        }
-        const tag = typeof item.tag === 'string' ? item.tag.trim() : '';
-        if (tag) meta.append(node('span', tag, 'preview-news-tag'));
-        if (item.example) meta.append(node('span', '예시'));
-        const link = node('a', item.source + ' 원문 ↗');
-        link.href = item.url;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        article.append(meta, node('h3', item.title), node('p', item.note), link);
-        section.append(article);
-        rows.push({ article, text: [item.title, item.note, item.source, tag].join(' ').toLocaleLowerCase('ko') });
-      }
-      groups.push({ month, section, rows, count, wasOpen: section.open });
-      newsList.append(section);
-    }
-    const emptyNews = node('p', '', 'preview-records-empty');
-    newsList.append(emptyNews);
-    let filtered = false;
-    function filterNews() {
-      const terms = (queryInput?.value || '').trim().toLocaleLowerCase('ko').split(/\s+/).filter(Boolean);
-      const month = monthSelect?.value || '';
-      const filtering = Boolean(month || terms.length);
-      let shown = 0;
-      for (const group of groups) {
-        if (filtering && !filtered) group.wasOpen = group.section.open;
-        let matched = 0;
-        for (const row of group.rows) {
-          row.article.hidden = Boolean(month && month !== group.month) || !terms.every(term => row.text.includes(term));
-          if (!row.article.hidden) matched++;
-        }
-        group.section.hidden = matched === 0;
-        if (filtering) group.section.open = matched > 0;
-        else if (filtered) group.section.open = group.wasOpen;
-        group.count.textContent = (matched === group.rows.length ? matched : matched + ' / ' + group.rows.length) + '건';
-        shown += matched;
-      }
-      filtered = filtering;
-      if (status) status.textContent = (filtering ? '표시 ' + shown + '건 · ' : '') + '전체 ' + news.length + '건';
-      emptyNews.hidden = shown > 0;
-      emptyNews.textContent = news.length ? '일치하는 보안 뉴스 없음' : '등록된 보안 뉴스 없음';
-    }
-    queryInput?.addEventListener('input', filterNews);
-    monthSelect?.addEventListener('change', filterNews);
-    filterNews();
-  }
-
   for (const comparison of document.querySelectorAll('[data-preview-compare]')) {
     const buttons = [...comparison.querySelectorAll('[data-compare-option]')];
     const panels = [...comparison.querySelectorAll('[data-compare-panel]')];
@@ -405,14 +302,31 @@
     });
   }
 
-  if (motion.matches && 'IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.classList.add('is-flow-active');
-        observer.unobserve(entry.target);
-      }
-    }, { threshold: .45 });
-    document.querySelectorAll('.preview-flow').forEach(figure => observer.observe(figure));
+  // 글을 연 직후 상단바를 잠시 낮춘다. 처음 스크롤·휠·방향키, 또는 상단바에 마우스나 포커스가 가면 원래대로.
+  // 동작 줄이기를 켰거나, 목차 링크(#)로 들어왔거나, 이미 스크롤된 채로 열렸으면 하지 않는다.
+  const header = document.querySelector('.site-header');
+  if (document.querySelector('.article-page') && header && motion.matches && !location.hash && scrollY < 8) {
+    const root = document.documentElement;
+    root.classList.add('is-reading-intro');
+    const keys = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ', 'Tab']);
+    const restore = () => {
+      root.classList.remove('is-reading-intro');
+      removeEventListener('scroll', onScroll);
+      removeEventListener('wheel', restore);
+      removeEventListener('touchmove', restore);
+      removeEventListener('keydown', onKey);
+      header.removeEventListener('pointermove', onPointer);
+      header.removeEventListener('focusin', restore);
+    };
+    const onScroll = () => { if (scrollY > 8) restore(); };
+    const onKey = event => { if (keys.has(event.key)) restore(); };
+    // 페이지가 열릴 때 마우스가 원래 상단바 위에 있던 경우는 무시하고, 실제로 움직였을 때만 되돌린다.
+    const onPointer = event => { if (event.movementX || event.movementY) restore(); };
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('wheel', restore, { passive: true });
+    addEventListener('touchmove', restore, { passive: true });
+    addEventListener('keydown', onKey);
+    header.addEventListener('pointermove', onPointer);
+    header.addEventListener('focusin', restore);
   }
 })();
