@@ -1,0 +1,8 @@
+{
+  "date": "2026-11-24",
+  "title": "OpenAI·Cisco, 패치 전 공격을 막는 AI 리눅스 보안 도구 'Shirudo' 공개",
+  "source": "X",
+  "url": "https://x.com/TheHackersNews/status/2125109924396978626",
+  "note": "AI가 eBPF로 취약한 코드 경로만 막는 임시 '실드'를 만들어, 서비스를 멈추지 않고 정식 패치 전까지 공격을 차단하는 오픈소스 도구다.",
+  "tag": "#보안기능"
+}
