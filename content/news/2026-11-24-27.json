@@ -1,0 +1,8 @@
+{
+  "date": "2026-11-24",
+  "title": "SAP NetWeaver 취약점(CVE-2025-42884) 실제 악용, CISA 악용 목록 등재",
+  "source": "X",
+  "url": "https://x.com/TheHackersNews/status/2124920434202460185",
+  "note": "작년에 패치된 SAP NetWeaver 결함이 공개 익스플로잇 없이 실제 공격에 쓰이고 있어, CISA가 악용 취약점 목록에 올리고 패치를 권고했다.",
+  "tag": "#패치미적용"
+}
