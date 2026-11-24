@@ -1,45 +1,77 @@
 name: publish-from-issue
 
 # Publishes content submitted through the issue forms (new post / security news).
+# - opened: create the post or news item.
+# - edited: apply the edit to the same post or news item (address and date stay the same).
+# - Run workflow (manual): re-apply past issues. Preview first (apply off), then apply.
 on:
   issues:
-    types: [opened]
+    types: [opened, edited]
+  workflow_dispatch:
+    inputs:
+      issues:
+        description: "Issue numbers to re-apply, e.g. 20, 25 (or all)"
+        required: true
+        default: "all"
+      apply:
+        description: "Apply the changes (off = preview only, nothing is changed)"
+        type: boolean
+        default: false
+      force:
+        description: "Also overwrite posts that were edited directly in the repository"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
   issues: write
+  actions: write   # to start build-site (the site deploy) after saving
 
 jobs:
   publish:
     # Only issues opened by the owner or collaborators are processed.
-    if: contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+    if: github.event_name == 'issues' && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
+    concurrency:
+      group: publish-issue-${{ github.event.issue.number }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Convert issue to content and publish
         env:
+          GH_TOKEN: ${{ github.token }}
           RESULT_FILE: ${{ runner.temp }}/result.json
+          ACTION: ${{ github.event.action }}
+          NUMBER: ${{ github.event.issue.number }}
         run: |
           # Issue text is never passed to this shell. tools/issue.mjs reads the event file directly.
+          if [ "$ACTION" = "opened" ]; then VERB=publish; else VERB=update; fi
           for attempt in 1 2 3; do
             node tools/issue.mjs
             if [ "$(jq -r .ok "$RESULT_FILE")" != "true" ]; then break; fi
-            git add -A
-            git -c user.name="p45ang-build" -c user.email="actions@users.noreply.github.com" commit -qm "post: publish from issue #${{ github.event.issue.number }}"
-            if git push; then exit 0; fi
-            # If someone else pushed meanwhile, rebuild on top of the latest state.
+            # Only the sources under content/ are saved. The site itself is built by build-site.
+            if [ -z "$(git status --porcelain -- content)" ]; then exit 0; fi
+            git add -- content
+            git -c user.name="p45ang-build" -c user.email="actions@users.noreply.github.com" commit -qm "post: $VERB from issue #$NUMBER"
+            if git push; then
+              gh workflow run build.yml --ref main || echo "::warning::Could not start build-site. Run it from the Actions tab."
+              exit 0
+            fi
+            # If someone else pushed meanwhile, redo it on top of the latest state.
             git fetch -q origin main
             git reset -q --hard origin/main
             git clean -fdq
           done
           if [ "$(jq -r .ok "$RESULT_FILE")" = "true" ]; then
             echo '{"ok":false}' > "$RESULT_FILE"
-            echo "Could not publish (the repository kept changing). Please try again in a moment." > "${RESULT_FILE%.json}.md"
+            echo "Could not publish (the repository kept changing). Please edit the issue again in a moment." > "${RESULT_FILE%.json}.md"
           fi
-      - name: Comment on the issue and close it
+      - name: Comment on the issue
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -49,4 +81,48 @@ jobs:
           [ -f "$RESULT_FILE" ] || exit 0
           [ "$(jq -r .skip "$RESULT_FILE")" = "true" ] && exit 0
           gh issue comment "$NUMBER" --body-file "${RESULT_FILE%.json}.md"
-          if [ "$(jq -r .ok "$RESULT_FILE")" = "true" ]; then gh issue close "$NUMBER" --reason completed; fi
+          if [ "$(jq -r .ok "$RESULT_FILE")" = "true" ] && [ "$(jq -r .created "$RESULT_FILE")" = "true" ]; then
+            gh issue close "$NUMBER" --reason completed
+          fi
+
+  resync:
+    # Manual run from the Actions tab (only people with write access can start it).
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: publish-issue-resync
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Re-apply past issues
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          RESYNC_ISSUES: ${{ inputs.issues }}
+          FORCE: ${{ inputs.force }}
+          APPLY: ${{ inputs.apply }}
+          RESULT_FILE: ${{ runner.temp }}/resync.json
+        run: |
+          node tools/issue.mjs --resync
+          {
+            echo ""
+            echo "### Files that would change"
+            echo '```'
+            git status --short -- content || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$APPLY" != "true" ]; then
+            echo "Preview only. Nothing was changed. Run again with apply on to publish." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ -z "$(git status --porcelain -- content)" ]; then echo "Nothing to change." >> "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          git add -- content
+          git -c user.name="p45ang-build" -c user.email="actions@users.noreply.github.com" commit -qm "post: update from issues (re-apply)"
+          git push
+          gh workflow run build.yml --ref main || echo "::warning::Could not start build-site. Run it from the Actions tab."
+          echo "Applied. The site will update in 1-2 minutes." >> "$GITHUB_STEP_SUMMARY"
