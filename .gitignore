@@ -147,3 +147,7 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# P45ang build output (GitHub Actions builds and deploys it; never committed)
+_site/
+_site.tmp-*/
