@@ -1,0 +1,99 @@
+(() => {
+  const $ = selector => document.querySelector(selector);
+  const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const themeButton = $('.theme-toggle');
+  const updateThemeLabel = () => themeButton?.setAttribute('aria-label', document.documentElement.dataset.theme === 'dark' ? '밝은 테마로 전환' : '어두운 테마로 전환');
+  updateThemeLabel();
+  themeButton?.addEventListener('click', () => {
+    const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem('p45ang-preview-theme', theme); } catch {}
+    updateThemeLabel();
+  });
+  const menuButton = $('.mobile-toggle');
+  menuButton?.addEventListener('click', () => {
+    const open = $('#main-nav').classList.toggle('open');
+    menuButton.setAttribute('aria-expanded', String(open));
+    menuButton.setAttribute('aria-label', open ? '메뉴 닫기' : '메뉴 열기');
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && $('#main-nav')?.classList.contains('open')) menuButton.click();
+  });
+
+  const dialog = $('.search-dialog');
+  const searchInput = $('#global-search');
+  const results = $('#search-results');
+  const meta = $('#search-meta');
+  const index = globalThis.p45angSearchIndex;
+  const siteRoot = new URL('../', document.currentScript.src);
+  let searchTimer;
+  function renderResults() {
+    if (!Array.isArray(index)) {
+      meta.textContent = '검색 자료를 불러오지 못했습니다.';
+      results.replaceChildren();
+      return;
+    }
+    if (!index.length) {
+      meta.textContent = '공개된 글 0편';
+      results.innerHTML = '<div class="search-empty">아직 게시글이 없습니다.</div>';
+      return;
+    }
+    const query = searchInput.value.trim().toLocaleLowerCase('ko');
+    const terms = query.split(/\s+/).filter(Boolean);
+    const matching = index.filter(p => terms.every(term => `${p.title} ${p.summary} ${p.category} ${p.tags.join(' ')} ${p.text}`.toLocaleLowerCase('ko').includes(term)));
+    meta.textContent = query ? `“${searchInput.value.trim()}” 검색 결과 ${matching.length}편` : `전체 기록 ${index.length}편 · 제목, 내용, 태그를 검색합니다`;
+    results.innerHTML = matching.length ? matching.map(p => `<a class="search-result" href="${esc(new URL(p.url, siteRoot).href)}"><small>${esc(p.category)} · ${esc(p.date.replaceAll('-', '.'))}</small><h3>${esc(p.title)}</h3>${p.summary ? `<p>${esc(p.summary)}</p>` : ''}</a>`).join('') : '<div class="search-empty">아직 일치하는 기록이 없어요.<br>다른 단어로 찾아보세요.</div>';
+  }
+  function openSearch(value = '') {
+    if (!dialog.open) dialog.showModal();
+    searchInput.value = value;
+    searchInput.focus();
+    renderResults();
+  }
+  document.querySelectorAll('[data-open-search]').forEach(button => button.addEventListener('click', () => openSearch()));
+  document.querySelectorAll('[data-search]').forEach(button => button.addEventListener('click', () => openSearch(button.dataset.search)));
+  $('[data-close-search]')?.addEventListener('click', () => dialog.close());
+  dialog?.addEventListener('click', event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
+  searchInput?.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(renderResults, 70); });
+  dialog?.addEventListener('keydown', event => {
+    const links = [...results.querySelectorAll('a')];
+    const active = links.indexOf(document.activeElement);
+    if (event.key === 'ArrowDown' && links.length) { event.preventDefault(); links[Math.min(active + 1, links.length - 1)].focus(); }
+    if (event.key === 'ArrowUp' && active >= 0) { event.preventDefault(); if (active === 0) searchInput.focus(); else links[active - 1].focus(); }
+    if (event.key === 'Enter' && document.activeElement === searchInput && links.length) { event.preventDefault(); links[0].click(); }
+  });
+  document.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); openSearch(); }
+  });
+
+  let toastTimer;
+  function toast(message) {
+    const element = $('.toast');
+    if (!element) return;
+    element.textContent = message;
+    element.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => element.classList.remove('show'), 2600);
+  }
+  async function copy(text) {
+    if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return; }
+    const area = document.createElement('textarea');
+    area.value = text; area.style.position = 'fixed'; area.style.opacity = '0';
+    document.body.append(area); area.select();
+    const success = document.execCommand('copy'); area.remove();
+    if (!success) throw new Error('복사 실패');
+  }
+  document.querySelectorAll('.prose pre').forEach(pre => {
+    const code = pre.querySelector('code');
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'copy-code'; button.textContent = '복사'; button.setAttribute('aria-label', '코드 복사');
+    button.addEventListener('click', async () => {
+      try { await copy(code ? code.textContent : pre.textContent); button.textContent = '복사됨 ✓'; setTimeout(() => { button.textContent = '복사'; }, 2200); } catch { toast('코드를 선택해 직접 복사해주세요.'); }
+    });
+    pre.append(button);
+  });
+  document.querySelectorAll('.prose table').forEach(table => {
+    const wrap = document.createElement('div'); wrap.className = 'table-scroll'; wrap.tabIndex = 0; wrap.setAttribute('role', 'region'); wrap.setAttribute('aria-label', '표 · 좌우로 스크롤 가능');
+    table.before(wrap); wrap.append(table);
+  });
+})();
